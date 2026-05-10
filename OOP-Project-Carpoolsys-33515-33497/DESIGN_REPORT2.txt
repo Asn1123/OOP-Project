@@ -1,0 +1,529 @@
+================================================================================
+        IBA CARPOOL FACILITATION SYSTEM
+        Design Report
+================================================================================
+
+  Authors  : Ayaan Memon (33515)  |  Vikash Kumar (33497)
+  Course   : Object Oriented Programming (OOP)
+
+================================================================================
+
+
+TABLE OF CONTENTS
+-----------------
+  1.  Introduction and Problem Statement
+  2.  System Overview
+  3.  Class Design and Hierarchy
+  4.  Encapsulation Decisions
+  5.  Polymorphism and Abstract Classes
+  6.  Operator Overloading
+  7.  Copy Constructor
+  8.  Data Structures and STL Usage
+  9.  Algorithms: Search, Sort, and Apriori
+  10. Persistence: CSV File Design
+  11. GUI Architecture
+  12. Validation and Exception Handling
+  13. Challenges and Trade-offs
+  14. Conclusion
+
+
+================================================================================
+1. INTRODUCTION AND PROBLEM STATEMENT
+================================================================================
+
+IBA Karachi has two campuses -- City Campus and Main Campus -- spread across
+different parts of Karachi. Many students travel from the same neighbourhoods
+(Clifton, DHA, Gulshan, Defence, etc.) and currently have no formal way to
+coordinate rides. This leads to repeated solo trips, unnecessary fuel costs,
+and an avoidable environmental footprint.
+
+The IBA Carpool Facilitation System addresses this by providing a structured
+platform where student drivers can post available rides and student passengers
+can search for and book those rides. The system enforces IBA-specific rules
+(every ride must start or end at a campus), respects gender preferences, and
+keeps all data between sessions so the experience is continuous.
+
+The project is built in C++17 with a Raylib graphical interface running at
+1920x1080. All data is persisted in CSV files. The design was guided by the
+principles taught in the OOP course: inheritance, polymorphism, encapsulation,
+operator overloading, copy constructors, STL usage, recursion, and sorting.
+
+
+================================================================================
+2. SYSTEM OVERVIEW
+================================================================================
+
+The system separates responsibilities into three layers:
+
+  Data layer
+    Four CSV files (students, cars, bikes, rides) hold all persistent state.
+    The application reads them at startup and writes them immediately after
+    every change.
+
+  Logic layer
+    CarpoolSystem is the single controller that owns all in-memory maps and
+    enforces all business rules. No GUI code talks to data files directly;
+    everything goes through CarpoolSystem.
+
+  Presentation layer
+    gui.cpp contains the Raylib GUI. It is compiled only when the USE_GUI
+    preprocessor flag is set, making it easy to drop in a console fallback.
+    A screen-state machine (enum class Screen) drives which function renders
+    each frame.
+
+This three-layer separation means the business logic can be tested or replaced
+independently of the interface, and the GUI never needs to know how data is
+stored.
+
+The two user roles -- Driver and Passenger -- share the same Student class
+but are differentiated by the isDriver boolean flag. This avoids duplicating
+the registration and profile-editing logic.
+
+
+================================================================================
+3. CLASS DESIGN AND HIERARCHY
+================================================================================
+
+The core domain classes are:
+
+  Student
+    Stores identity (ID, name, phone), gender, role flag, and a ride counter.
+    Every registered user is a Student regardless of role.
+
+  Vehicle  (abstract base)
+  |-- Car
+  |-- Bike
+    A Vehicle is anything a Driver owns. The base class holds all shared
+    fields (vehicleId, ownerId, make, model, licensePlate, capacity) and
+    declares one pure virtual method: getType(). Car overrides it to return
+    "Car"; Bike returns "Bike". This makes it trivial to distinguish types
+    at runtime without any casts.
+
+  Ride
+    Represents a single posted journey. It owns its list of passenger IDs,
+    tracks seat availability, and holds the date/time, areas, gender
+    preference, and status. Ride is entirely self-contained -- it does not
+    hold pointers to Student or Vehicle objects; it holds their IDs. This
+    avoids pointer ownership headaches and makes serializing to CSV simple.
+
+  Notification
+    A lightweight wrapper around a recipient ID and a message string. It is
+    not persisted (only lives for the session) because its purpose is to
+    inform the passenger of changes that happened while the app was running.
+
+  CarpoolSystem
+    The controller. It owns four std::map collections (studentMap, vehicleMap,
+    rideMap, notifMap) and all auto-incrementing ID counters. Every operation
+    that changes state -- creating a ride, booking a seat, deleting an account
+    -- is a method here. The GUI calls these methods and reacts to their
+    return values; it never manipulates the maps directly.
+
+Why IDs instead of pointers in Ride?
+  Storing IDs (strings like "STU-3", "VEH-2") instead of raw pointers means
+  Ride objects can be copied and stored in std::map without any custom
+  memory management. It also makes CSV serialization trivial: write the ID,
+  read it back, look it up in the map. Pointer-based designs would require
+  a more complex ownership model (shared_ptr, index tables, etc.).
+
+
+================================================================================
+4. ENCAPSULATION DECISIONS
+================================================================================
+
+Every class follows strict encapsulation: all data members are private, and
+access is through named getters and setters.
+
+Getters are const-qualified wherever the value is not modified. This lets
+const pointers (returned by CarpoolSystem::getStudent and getVehicle) be used
+safely in the GUI without risking accidental mutation.
+
+Setters exist only where a field legitimately changes after construction:
+  - Student: setName, setPhone, setGender (for profile editing)
+  - Vehicle: setMake, setModel, setLicensePlate, setCapacity (same reason)
+  - Ride: setStatus, setSeatsLeft, setRideDate, rawAddPassenger
+           (these are file-load helpers -- they are used only by loadRidesFromFile
+            to restore persisted state without triggering the normal business-rule
+            side-effects of markCompleted or addPassenger)
+
+The rawAddPassenger method deserves special attention. During normal operation,
+addPassenger is the only way to add a passenger: it checks for duplicates,
+decrements seatsLeft, and promotes the status to FULL if seats run out.
+rawAddPassenger bypasses all of that and simply appends the ID. This is
+intentional and safe because when loading from CSV, the seatsLeft and status
+fields are restored from the file separately -- we do not want the loading
+code to double-count seats.
+
+
+================================================================================
+5. POLYMORPHISM AND ABSTRACT CLASSES
+================================================================================
+
+Vehicle is an abstract class because there is no meaningful concept of a
+generic "vehicle" -- only cars and bikes exist in this system. Declaring
+getType() as a pure virtual method ( = 0 ) enforces that every instantiable
+vehicle type must identify itself.
+
+The vehicleMap in CarpoolSystem stores Vehicle* pointers allocated on the
+heap. This is the classic OOP pattern for runtime polymorphism:
+
+  vehicleMap[id] = new Car(...);   // or new Bike(...)
+
+When the system later retrieves a vehicle, the caller receives a Vehicle*.
+Calling v->getType() dispatches to Car::getType() or Bike::getType() through
+the vtable -- no switch, no cast, no type checking code in the caller.
+
+The same virtual dispatch is used in operator<<(ostream, Vehicle). The
+overloaded stream operator calls v.getType() on a const Vehicle& reference,
+which still goes through the vtable. This lets std::cout << *v print the
+correct type label regardless of whether v points to a Car or a Bike.
+
+The destructor in CarpoolSystem iterates vehicleMap and calls delete on every
+pointer to prevent memory leaks. This is the only place heap memory is
+managed; the rest of the system uses value-type objects in std::map.
+
+
+================================================================================
+6. OPERATOR OVERLOADING
+================================================================================
+
+Three classes provide overloaded operators, each with a clear justification.
+
+Student: operator== and operator!=
+  Two students are the same person if and only if they share the same student
+  ID. Overloading == makes this comparison readable wherever it is needed
+  (e.g., checking whether a passenger is already listed) without exposing
+  the internal ID field.
+
+  operator!= is defined in terms of == following the standard pattern:
+    bool operator!=(const Student& o) const { return !(*this == o); }
+
+  A friend operator<< is provided so any Student can be streamed to cout
+  with consistent formatting, useful for console debugging and Apriori output.
+
+Ride: operator< and operator==
+  operator< compares rides chronologically: first by date string (YYYY-MM-DD
+  lexicographic order is also chronological), then by time string (HH:MM,
+  same property). This makes Ride directly usable with std::sort and as a
+  tie-breaker in the search results comparator:
+
+    return ra < rb;   // earlier ride wins the tie
+
+  operator== compares by ride ID. This is used to check membership when
+  iterating ride collections.
+
+  A friend operator<< streams a one-line summary of a ride's ID, route,
+  date/time, status, and remaining seats.
+
+Vehicle: operator<<
+  Streams the vehicle type, make, model, plate, and capacity. Used in
+  console output and Apriori summaries. Virtual dispatch inside the
+  operator means the type label is always correct.
+
+The decision to use friend functions for operator<< rather than member
+functions follows the standard C++ convention: the left operand of << is
+std::ostream&, which is not our class, so the operator cannot be a member.
+
+
+================================================================================
+7. COPY CONSTRUCTOR
+================================================================================
+
+Student provides an explicit copy constructor:
+
+  Student::Student(const Student& other)
+      : studentId(other.studentId), name(other.name),
+        phoneNumber(other.phoneNumber), gender(other.gender),
+        isDriver(other.isDriver), ridesCompleted(other.ridesCompleted) {}
+
+For a class that contains only primitive types and std::string members, the
+compiler-generated copy constructor would be identical in effect. The explicit
+definition was included to satisfy the OOP course requirement and to make the
+copy semantics visible and auditable. If the class were to gain a pointer
+member in the future (for example, a profile picture texture), the explicit
+copy constructor would be the right place to handle deep copying -- the
+compiler's shallow copy would silently break.
+
+Students are stored by value in std::map<string, Student>. Insertion into
+the map copies the Student object, so the copy constructor is called every
+time a new account is created or loaded from file. Having an explicit
+definition makes that behaviour deliberate rather than implicit.
+
+
+================================================================================
+8. DATA STRUCTURES AND STL USAGE
+================================================================================
+
+std::map was chosen as the primary container for all four collections
+(studentMap, vehicleMap, rideMap, notifMap).
+
+Rationale:
+  - Keyed lookup by ID is the most common operation in the system. std::map
+    provides O(log n) lookup, insertion, and deletion, which is entirely
+    adequate for the expected number of users (~hundreds at most).
+  - Iteration over all entries is also frequently needed (search, Apriori,
+    auto-complete). std::map's ordered iteration is consistent and predictable.
+  - std::unordered_map would give O(1) average lookup but was not chosen
+    because the deterministic ordering of std::map makes the CSV output stable
+    across runs, which simplifies manual inspection and debugging.
+
+Passenger lists inside each Ride use std::vector<string>. Vector is
+appropriate because:
+  - The list is small (bounded by vehicle capacity, max 6)
+  - Sequential iteration is the most common operation
+  - The addPassenger and removePassenger methods need index-based erase,
+    which vector supports efficiently for small sizes
+
+std::sort with a lambda is used in searchRides to rank results by closeness
+to the requested time. The lambda captures reqMins (the requested time in
+minutes) by reference and computes the absolute time difference for each
+ride. When two rides are equally close in time, the Ride::operator< tie-
+breaker ensures a stable, chronological ordering.
+
+std::find is used inside addPassenger to check for duplicate bookings:
+  for (auto& pid : passengerIds)
+      if (pid == stuId) return false;
+A linear scan is acceptable here because the list is always tiny.
+
+
+================================================================================
+9. ALGORITHMS: SEARCH, SORT, AND APRIORI
+================================================================================
+
+Search
+  searchRides filters the rideMap for rides that match the requested pickup
+  and drop-off areas, are currently OPEN or FULL, and have a departure time
+  within 30 minutes of the requested time. The 30-minute window was chosen
+  as a practical tolerance: too narrow would return no results for slightly
+  off times; too wide would return rides that are not useful.
+
+Sort
+  After filtering, results are sorted using std::sort with a comparator
+  lambda. The primary key is the absolute time difference from the requested
+  time (closest first). Ties are broken by the chronological Ride::operator<
+  (earlier date and time first). This ensures the most relevant ride always
+  appears at the top of the search results list.
+
+Apriori Frequent Traveller Analysis
+  The system implements a simplified Apriori algorithm to identify groups of
+  students who frequently travel together across completed rides.
+
+  Each completed ride contributes one "transaction" -- the sorted list of all
+  participants (driver + passengers). The algorithm then runs in three steps:
+
+  Step 1: Count singletons. Each student who appears in at least minSupport
+  rides is a frequent individual traveller.
+
+  Step 2: Find frequent pairs. All pairs of frequent individuals are tested
+  against the transaction list. A pair is frequent if both members appear
+  together in at least minSupport rides.
+
+  Step 3: Find frequent triples. Same idea extended to groups of three.
+
+  The key OOP and algorithmic requirement is that steps 2 and 3 use the same
+  recursive function (generateItemsets) rather than two separate loops.
+
+  generateItemsets uses backtracking:
+    - It maintains a "current" vector being built up.
+    - At each recursive call, it tries adding one more candidate from a
+      sorted candidate list (starting after the last added index to avoid
+      duplicates).
+    - When the current vector reaches the target size k, it counts how many
+      transactions contain all items in the vector and records the count.
+    - After the recursive call returns, it pops the last element
+      (backtrack) and tries the next candidate.
+
+  This recursive structure naturally generates all combinations of size k
+  without repetition, because the candidate index always advances forward.
+  The same function handles k=2 (pairs) and k=3 (triples) by passing
+  different k values.
+
+
+================================================================================
+10. PERSISTENCE: CSV FILE DESIGN
+================================================================================
+
+CSV was chosen over a binary format because it is human-readable, easy to
+inspect and edit manually, and requires no external library.
+
+Four separate files are used rather than one combined file to match the
+natural entity boundaries of the domain: students, vehicles (split into
+cars and bikes for the type field), and rides.
+
+Immediate write strategy
+  Every mutation (create, update, delete, book, cancel) writes the relevant
+  CSV file immediately after the change. This means the data on disk is
+  always consistent with the in-memory state, even if the application
+  crashes or is closed without a formal exit. The trade-off is slightly
+  more I/O than a "write on exit" approach, but given the small data sizes
+  this is undetectable in practice.
+
+Backward compatibility
+  The students.csv format was revised during development to remove the
+  homeArea field. The loader handles both the old 7-field format and the
+  new 6-field format by checking the number of fields in each line. This
+  prevents existing data files from becoming unreadable after an upgrade.
+
+  Similarly, the rides.csv loader detects whether the date field is present
+  (new format, contains '-') or absent (old format, first field is HH:MM
+  time). In the old format, rides are assigned today's date on load.
+
+Passenger sub-format
+  Ride passengers are stored as a semicolon-separated list in the last CSV
+  field, e.g.: "STU-3;STU-7;STU-11". This avoids creating a separate
+  junction table while keeping the file a valid CSV (one row per ride).
+
+
+================================================================================
+11. GUI ARCHITECTURE
+================================================================================
+
+The GUI is contained in a single private class (CarpoolGUI) defined inside
+gui.cpp. It is not exposed in any header; the only public interface is the
+free function runGUI(CarpoolSystem&) at the bottom of the file. This keeps
+the Raylib dependency entirely isolated from the rest of the project.
+
+Screen state machine
+  An enum class Screen with 11 values drives the render loop. Every frame,
+  a switch statement calls the appropriate draw function. Transitioning
+  between screens is done exclusively through the setScreen() helper, which
+  also clears the error message and triggers checkAutoComplete() so the
+  system always reflects current ride statuses.
+
+Widget helpers
+  Repetitive drawing operations are extracted into small static helper
+  methods: btn, btnP, btnD, panel, textInput, phoneTextInput, areaGrid,
+  prefSelector, and toggle2. These helpers encapsulate the hover detection,
+  colour logic, text centering, and click detection that would otherwise be
+  duplicated across every screen. They return bool (button clicked) or int
+  (selection index), making call sites compact and readable.
+
+Colour design
+  A two-context colour system is used throughout. The window background is
+  a deep maroon (C_BG). Inside that, white panels (C_PANEL) hold content.
+  This creates two text contexts:
+    - Text on the dark background uses C_TEXT (near-white) or C_MUTED
+      (muted pink) for secondary labels.
+    - Text inside white panels uses C_DARK (near-black) for values and
+      C_DLABEL (grey) for field labels.
+  The IBA crimson C_ACCENT is used for primary action buttons, headings
+  inside panels, and selected states in toggles and area grids.
+  Campus areas in the area grid are highlighted in C_CAMPUS (green) to
+  visually enforce the IBA campus rule.
+
+Form state
+  Each form (register, create ride, search, edit profile) stores its state
+  in dedicated member variables prefixed by reg_, cr_, sr_, and ep_
+  respectively. This avoids allocating state on the stack (which would be
+  reset every frame) and makes the form values survive screen transitions.
+
+Scroll handling
+  Screens with variable-length lists (ride history, notifications, search
+  results) implement simple wheel-based scrolling through integer scroll
+  offset variables (scr_history, scr_notifs, scr_results). The offset is
+  clamped to valid ranges each frame, and only the visible slice of items
+  is drawn.
+
+
+================================================================================
+12. VALIDATION AND EXCEPTION HANDLING
+================================================================================
+
+Input validation occurs at two levels.
+
+GUI-level prevention
+  The phoneTextInput widget physically rejects any character that is not a
+  digit, and stops accepting input once 11 characters have been entered.
+  The area grid prevents selecting the same area for pickup and drop-off
+  because the Create/Search button checks cr_pickup != cr_dropoff before
+  calling CarpoolSystem. Date buttons are pre-computed (today / tomorrow /
+  day after) so the user cannot enter an invalid date string.
+
+Logic-level validation with exceptions
+  The registration and edit-profile submit handlers use try/catch blocks
+  around std::runtime_error to validate the collected form data before
+  calling CarpoolSystem:
+
+    if (nm.empty()) throw std::runtime_error("Name is required.");
+    if (ph.length() > 11) throw std::runtime_error("Phone max 11 digits.");
+    if (cap < 1 || cap > 6) throw std::runtime_error("Seats 1-6.");
+
+  When an exception is caught, its message is stored in errMsg and displayed
+  in red below the form. This pattern keeps the happy path clean and bundles
+  all error display logic into a single catch block per form.
+
+CarpoolSystem defences
+  createRide, bookRide, and cancelRide each perform their own guard checks
+  (returning "" or false on failure) independently of the GUI. This means
+  the business rules are enforced even if GUI validation is somehow bypassed
+  (e.g., in a console build or a future API client).
+
+
+================================================================================
+13. CHALLENGES AND TRADE-OFFS
+================================================================================
+
+Balancing simplicity with OOP requirements
+  A straightforward implementation could have put all logic in a single file
+  with no inheritance. The OOP structure (Vehicle hierarchy, separate
+  CarpoolSystem controller, explicit copy constructor) adds some verbosity
+  but makes the design extensible and satisfies the course requirements in
+  a way that is natural rather than forced. For example, adding a new vehicle
+  type (Electric Rickshaw) would only require a new subclass of Vehicle with
+  its own getType() -- no changes to CarpoolSystem or the GUI.
+
+No database
+  Using CSVs instead of SQLite or a similar embedded database keeps the
+  project dependency-free beyond Raylib. The trade-off is that all four files
+  are re-written in full on every save, and there is no query language. For
+  the expected scale (a university cohort) this is a non-issue, but a
+  production system would benefit from a proper database.
+
+In-session-only notifications
+  Notifications are not persisted to disk. A passenger who exits and re-opens
+  the application will not see notifications from the previous session. This
+  was a deliberate simplification -- implementing a persistent notification
+  log would require either a fifth CSV file or a dedicated notification table.
+  The current design is transparent about this limitation.
+
+Raylib on Windows only
+  Raylib is cross-platform, but the win_icon.cpp file uses the Windows API
+  to set the exe and taskbar icon, and the Makefile links Windows-specific
+  libraries (gdi32, winmm, ole32). The application therefore only compiles
+  and runs on Windows. A cross-platform build would require conditional
+  compilation of win_icon.cpp.
+
+Static layout at 1920x1080
+  The GUI is designed for a fixed 1920x1080 resolution. All positions and
+  sizes are hardcoded. On a smaller monitor Raylib will still open the window,
+  but content may be clipped. A resolution-independent layout using relative
+  coordinates would be the correct fix but was out of scope for this project.
+
+
+================================================================================
+14. CONCLUSION
+================================================================================
+
+The IBA Carpool Facilitation System demonstrates how OOP principles produce a
+codebase that is organised, maintainable, and naturally extensible.
+
+Inheritance (Vehicle -> Car/Bike) eliminates type-switch logic throughout the
+system. Polymorphism via virtual dispatch ensures that adding a new vehicle
+type requires only a new subclass. Encapsulation keeps internal state
+protected and makes the public interfaces of each class the single point of
+truth for what that class can do. Operator overloading (==, <, <<) makes the
+classes first-class citizens in STL algorithms and stream output. The explicit
+copy constructor makes Student's copy semantics visible and auditable. STL
+containers and algorithms (map, vector, sort, find) handle all data management
+without reinventing standard solutions. Recursion in the Apriori backtracking
+generator produces a general k-itemset counter that replaces what would
+otherwise have been two separately written loops. Exception handling separates
+error reporting from the main logic flow cleanly.
+
+Together these produce a system that is usable, data-safe (immediate CSV
+persistence), and structurally sound -- one that could be meaningfully
+extended with a database backend, additional vehicle types, or a mobile
+interface without rewriting its core logic.
+
+================================================================================
+                               END OF REPORT
+================================================================================

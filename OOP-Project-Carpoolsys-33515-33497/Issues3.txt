@@ -1,0 +1,3 @@
+-Add more maroon than white.
+-Drivers edit profile doesn't allow for all attribute changes like vehicle info which should also be allowed to be changed and seats.
+-Plus the delete profile icon shouldn't be in a danger zone, just make it a red icon button with !
