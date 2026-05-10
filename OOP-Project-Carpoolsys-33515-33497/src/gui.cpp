@@ -666,8 +666,8 @@ public:
     explicit GUI3(CarpoolSystem& s):sys(s){}
 
     void run(){
-        SetConfigFlags(FLAG_MSAA_4X_HINT);
         InitWindow(W,H,"IBA Carpool");
+        SetWindowPosition(0,0);
         g_font = LoadFontEx("ABeeZee-Regular.otf", 96, nullptr, 0);
         SetTextureFilter(g_font.texture, TEXTURE_FILTER_BILINEAR);
 #ifdef _WIN32
