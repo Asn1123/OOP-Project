@@ -1,7 +1,7 @@
 CXX      = g++
 CXXFLAGS = -std=c++17 -DUSE_GUI -Iinclude -Iraylib/include
-LIBS     = app_rc.o raylib/lib/libraylib.a -lgdi32 -lwinmm -lole32
-OUT      = carpool.exe
+LIBS     = app_rc.o raylib/lib/libraylib.a -lgdi32 -lwinmm -lole32 -static-libgcc -static-libstdc++ -Wl,-Bstatic,-lwinpthread,-Bdynamic
+OUT      = carpool1.exe
 
 SRCS = src/main.cpp \
        src/CarpoolSystem.cpp \
