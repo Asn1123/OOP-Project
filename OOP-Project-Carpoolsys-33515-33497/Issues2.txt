@@ -1,8 +1,0 @@
--Change the colour combination to (#700f1a + some shade of white like #FAFAFA), like IBA's colors
--Make a red-colored icon with a cross to always be accessible to exit the program
--The number of digits in the phone number must not exceed 11. There should be an exception handling mechanism. 
--The number of seats should be between 1 and 6 (both inclusive) for a driver registering their car.  
--Both the driver and the passenger should be able to either edit or delete their accounts. 
--Move the instruction line, "IBA city/IBA main campus - highlighted in green at least one must be selected" from top-left to below the Pick-up locations options. 
--Don't take 'Home Area' input from both the drivers and passengers and remove as a class attribute
--In showing the available ride, Vehicle's details (Make and Model) should also be visible to the passenger

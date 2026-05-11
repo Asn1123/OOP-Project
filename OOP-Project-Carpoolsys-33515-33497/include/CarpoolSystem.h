@@ -8,90 +8,90 @@
 #include "Bike.h"
 #include "Ride.h"
 #include "Notification.h"
+using namespace std;
 
 class CarpoolSystem {
 private:
-    std::map<std::string, Student>                   studentMap;
-    std::map<std::string, Vehicle*>                  vehicleMap;
-    std::map<std::string, Ride>                      rideMap;
-    std::map<std::string, std::vector<Notification>> notifMap;
+    map<string, Student> students;
+    map<string, Vehicle*> vehicles;
+    map<string, Ride> rides;
+    map<string, vector<Notification>> notifs;
 
-    int nextStudentId = 1;
-    int nextVehicleId = 1;
-    int nextRideId    = 1;
+    int nextStu = 1;
+    int nextVeh = 1;
+    int nextRid = 1;
 
-    void bumpCounter(const std::string& id, int& counter, const std::string& prefix);
+    void bumpId(const string& id, int& counter, const string& prefix);
 
     // apriori helpers
-    std::map<std::string, int> countSingletons();
-    std::string idToName(const std::string& id);
+    map<string, int> countSingles();
+    string idToName(const string& id);
 
-    // Recursive k-itemset generator (backtracking over sorted candidate set)
-    void generateItemsets(const std::vector<std::vector<std::string>>& transactions,
-                          std::vector<std::string>& current,
-                          int startIdx,
-                          const std::vector<std::string>& candidates,
-                          int k,
-                          std::map<std::vector<std::string>, int>& freqMap);
+    // backtracking k-itemset counter
+    void genItemsets(const vector<vector<string>>& txns,
+                     vector<string>& cur,
+                     int start,
+                     const vector<string>& cands,
+                     int k,
+                     map<vector<string>, int>& freq);
 
 public:
     ~CarpoolSystem();
 
     // --- file I/O ---
-    void loadStudentsFromFile  (const std::string& path);
-    void loadCarsFromFile      (const std::string& path);
-    void loadBikesFromFile     (const std::string& path);
-    void loadRidesFromFile     (const std::string& path);
-    void saveStudentsToFile    (const std::string& path) const;
-    void saveRidesToFile       (const std::string& path) const;
-    void saveCarsToFile        (const std::string& path) const;
-    void saveBikesToFile       (const std::string& path) const;
+    void loadStudentsFromFile(const string& path);
+    void loadCarsFromFile(const string& path);
+    void loadBikesFromFile(const string& path);
+    void loadRidesFromFile(const string& path);
+    void saveStudentsToFile(const string& path) const;
+    void saveRidesToFile(const string& path) const;
+    void saveCarsToFile(const string& path) const;
+    void saveBikesToFile(const string& path) const;
 
     // --- account creation ---
-    std::string createStudent(const std::string& name, const std::string& phone,
-                              Gender g, bool isDriver);
-    std::string addCar (const std::string& ownerId, const std::string& make,
-                        const std::string& model, const std::string& plate, int capacity);
-    std::string addBike(const std::string& ownerId, const std::string& make,
-                        const std::string& model, const std::string& plate, int capacity);
+    string createStudent(const string& name, const string& phone,
+                         Gender g, bool isDriver);
+    string addCar(const string& ownerId, const string& make,
+                  const string& model, const string& plate, int cap);
+    string addBike(const string& ownerId, const string& make,
+                   const string& model, const string& plate, int cap);
 
     // --- account management ---
-    bool updateStudent(const std::string& id, const std::string& name,
-                       const std::string& phone, Gender g);
-    bool updateVehicle(const std::string& ownerId, const std::string& mk,
-                       const std::string& mdl, const std::string& plate, int cap);
-    bool deleteStudent(const std::string& id);
+    bool updateStudent(const string& id, const string& name,
+                       const string& phone, Gender g);
+    bool updateVehicle(const string& ownerId, const string& mk,
+                       const string& mdl, const string& plate, int cap);
+    bool deleteStudent(const string& id);
 
     // --- ride lifecycle ---
     // returns new rideId or "" on failure
-    std::string createRide(const std::string& driverId, const std::string& vehicleId,
-                           const std::string& rideDate, const std::string& rideTime,
-                           Area pickup, Area dropoff, GenderPref pref);
-    bool bookRide  (const std::string& rideId, const std::string& studentId);
-    bool cancelRide(const std::string& rideId);
+    string createRide(const string& driverId, const string& vehicleId,
+                      const string& rideDate, const string& rideTime,
+                      Area pickup, Area dropoff, GenderPref pref);
+    bool bookRide(const string& rideId, const string& stuId);
+    bool cancelRide(const string& rideId);
 
     void checkAutoComplete();
 
     // --- queries ---
-    std::string              getDriverActiveRide (const std::string& driverId) const;
-    std::string              getVehicleForDriver (const std::string& driverId) const;
-    std::vector<std::string> searchRides         (Area pickup, Area dropoff,
-                                                  const std::string& requestedTime) const;
-    std::vector<std::string> getDriverHistory    (const std::string& driverId) const;
+    string activeRide(const string& driverId) const;
+    string vehicleOf(const string& driverId) const;
+    vector<string> searchRides(Area pickup, Area dropoff, const string& wantTime) const;
+    vector<string> driverHistory(const string& driverId) const;
 
-    // --- GUI accessors ---
-    const Student*  getStudent(const std::string& id) const;
-    Ride*           getRide   (const std::string& id);
-    const Ride*     getRide   (const std::string& id) const;
-    const Vehicle*  getVehicle(const std::string& id) const;
+    // --- accessors ---
+    const Student* getStudent(const string& id) const;
+    Ride* getRide(const string& id);
+    const Ride* getRide(const string& id) const;
+    const Vehicle* getVehicle(const string& id) const;
 
-    const std::vector<Notification>& getNotifications(const std::string& studentId) const;
-    const std::map<std::string, Ride>&    getRideMap()    const;
-    const std::map<std::string, Student>& getStudentMap() const;
+    const vector<Notification>& getNotifications(const string& stuId) const;
+    const map<string, Ride>& getRides() const;
+    const map<string, Student>& getStudents() const;
 
     // --- console fallback ---
-    void showAvailableRides()                    const;
-    void showStudents()                          const;
-    void showNotifications(const std::string& studentId) const;
+    void showAvailableRides() const;
+    void showStudents() const;
+    void showNotifications(const string& stuId) const;
     void runApriori(int minSupport = 2);
 };

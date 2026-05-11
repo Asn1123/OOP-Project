@@ -3,56 +3,56 @@
 #include <vector>
 #include <ostream>
 #include "enums.h"
+using namespace std;
 
 class Ride {
 private:
-    std::string  rideId;
-    std::string  driverId;
-    std::string  vehicleId;
-    std::string  rideDate;      // "YYYY-MM-DD"
-    std::string  rideTime;      // "HH:MM"
-    Area         pickupArea;
-    Area         dropOffArea;
-    GenderPref   genderPref;
-    RideStatus   status;
-    int          seatsLeft;
-    std::vector<std::string> passengerIds;
+    string rideId;
+    string driverId;
+    string vehicleId;
+    string rideDate;  // "YYYY-MM-DD"
+    string rideTime;  // "HH:MM"
+    Area pickup;
+    Area dropoff;
+    GenderPref pref;
+    RideStatus status;
+    int seats;
+    vector<string> passengers;
 
 public:
     Ride();
-    Ride(std::string rid, std::string drv, std::string veh,
-         std::string date, std::string time, Area pickup, Area dropoff,
-         GenderPref pref, int seats);
+    Ride(string rid, string drv, string veh,
+         string date, string time, Area pu, Area drop,
+         GenderPref gp, int seats);
 
-    std::string getRideId()      const;
-    std::string getDriverId()    const;
-    std::string getVehicleId()   const;
-    std::string getRideDate()    const;
-    std::string getRideTime()    const;
-    Area        getPickupArea()  const;
-    Area        getDropOffArea() const;
-    GenderPref  getGenderPref()  const;
-    RideStatus  getStatus()      const;
-    int         getSeatsLeft()   const;
-    const std::vector<std::string>& getPassengers() const;
+    string getRideId() const;
+    string getDriverId() const;
+    string getVehicleId() const;
+    string getRideDate() const;
+    string getRideTime() const;
+    Area getPickup() const;
+    Area getDropoff() const;
+    GenderPref getPref() const;
+    RideStatus getStatus() const;
+    int getSeats() const;
+    const vector<string>& getPassengers() const;
 
-    bool addPassenger   (const std::string& stuId);
-    bool removePassenger(const std::string& stuId);
+    bool addPassenger(const string& stuId);
+    bool removePassenger(const string& stuId);
     void markCompleted();
     void markCanceled();
 
-    // file-load only; no side effects on seatsLeft/status
+    // raw load only — no side effects on seats/status
     void setStatus(RideStatus s);
-    void setSeatsLeft(int s);
-    void setRideDate(const std::string& d);
-    void rawAddPassenger(const std::string& stuId);
+    void setSeats(int s);
+    void setRideDate(const string& d);
+    void rawAddPassenger(const string& stuId);
 
-    std::vector<std::string> getAllParticipants() const;
+    vector<string> everyone() const; // driver + all passengers
     void displayRide() const;
 
-    // Chronological ordering: earlier date+time is "less than"
     bool operator<(const Ride& other) const;
     bool operator==(const Ride& other) const;
 
-    friend std::ostream& operator<<(std::ostream& os, const Ride& r);
+    friend ostream& operator<<(ostream& os, const Ride& r);
 };

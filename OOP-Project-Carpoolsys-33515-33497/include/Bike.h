@@ -1,12 +1,13 @@
 #pragma once
 #include "Vehicle.h"
+using namespace std;
 
 class Bike : public Vehicle {
 public:
     Bike();
-    Bike(std::string vid, std::string oid, std::string mk,
-         std::string mdl, std::string plate, int cap);
+    Bike(string vid, string oid, string mk,
+         string mdl, string plate, int cap);
 
-    std::string getType()        const override;
-    void        displayVehicle() const override;
+    string getType()        const override;
+    void   displayVehicle() const override;
 };

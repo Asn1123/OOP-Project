@@ -4,183 +4,183 @@
 #include <sstream>
 #include <algorithm>
 #include <cmath>
+using namespace std;
 
-static const std::vector<Notification> EMPTY_NOTIFS;
+static const vector<Notification> NO_NOTIFS;
 
 CarpoolSystem::~CarpoolSystem() {
-    for (auto& [id, ptr] : vehicleMap) delete ptr;
+    for (auto& [id, ptr] : vehicles) delete ptr;
 }
 
-void CarpoolSystem::bumpCounter(const std::string& id, int& counter, const std::string& prefix) {
+void CarpoolSystem::bumpId(const string& id, int& counter, const string& prefix) {
     if (id.rfind(prefix, 0) == 0) {
-        int n = std::stoi(id.substr(prefix.size()));
+        int n = stoi(id.substr(prefix.size()));
         if (n >= counter) counter = n + 1;
     }
 }
 
-void CarpoolSystem::loadStudentsFromFile(const std::string& path) {
-    std::ifstream f(path);
-    if (!f.is_open()) { std::cout << "  [warn] cannot open " << path << "\n"; return; }
-    std::string line;
-    while (std::getline(f, line)) {
+void CarpoolSystem::loadStudentsFromFile(const string& path) {
+    ifstream f(path);
+    if (!f.is_open()) { cout << "  [warn] cannot open " << path << "\n"; return; }
+    string line;
+    while (getline(f, line)) {
         if (line.empty() || line[0] == '#') continue;
-        std::vector<std::string> fields;
-        std::stringstream ss(line);
-        std::string tok;
-        while (std::getline(ss, tok, ',')) fields.push_back(tok);
+        vector<string> fields;
+        stringstream ss(line);
+        string tok;
+        while (getline(ss, tok, ',')) fields.push_back(tok);
         if (fields.size() < 6) continue;
 
-        std::string id    = fields[0];
-        std::string name  = fields[1];
-        std::string phone = fields[2];
-        std::string gStr  = fields[3];
+        string id = fields[0];
+        string name = fields[1];
+        string phone = fields[2];
+        string gStr = fields[3];
 
         // 7-field old format had homeArea at index 4
-        std::string dStr = (fields.size() >= 7) ? fields[5] : fields[4];
-        std::string rStr = (fields.size() >= 7) ? (fields.size() > 6 ? fields[6] : "0")
-                                                 : fields[5];
+        string dStr = (fields.size() >= 7) ? fields[5] : fields[4];
+        string rStr = (fields.size() >= 7) ? (fields.size() > 6 ? fields[6] : "0")
+                                           : fields[5];
 
         Gender g = (gStr == "0") ? Gender::MALE : Gender::FEMALE;
-        bool   d = (dStr == "1");
-        int    rInt = 0;
-        try { rInt = rStr.empty() ? 0 : std::stoi(rStr); } catch (...) {}
-        studentMap[id] = Student(id, name, phone, g, d, rInt);
-        bumpCounter(id, nextStudentId, "STU-");
+        bool drv = (dStr == "1");
+        int done = 0;
+        try { done = rStr.empty() ? 0 : stoi(rStr); } catch (...) {}
+        students[id] = Student(id, name, phone, g, drv, done);
+        bumpId(id, nextStu, "STU-");
     }
 }
 
-void CarpoolSystem::loadCarsFromFile(const std::string& path) {
-    std::ifstream f(path);
-    if (!f.is_open()) { std::cout << "  [warn] cannot open " << path << "\n"; return; }
-    std::string line;
-    while (std::getline(f, line)) {
+void CarpoolSystem::loadCarsFromFile(const string& path) {
+    ifstream f(path);
+    if (!f.is_open()) { cout << "  [warn] cannot open " << path << "\n"; return; }
+    string line;
+    while (getline(f, line)) {
         if (line.empty() || line[0] == '#') continue;
-        std::stringstream ss(line);
-        std::string id, oid, mk, mdl, plate, cap;
-        std::getline(ss, id,    ',');
-        std::getline(ss, oid,   ',');
-        std::getline(ss, mk,    ',');
-        std::getline(ss, mdl,   ',');
-        std::getline(ss, plate, ',');
-        std::getline(ss, cap,   ',');
+        stringstream ss(line);
+        string id, oid, mk, mdl, plate, cap;
+        getline(ss, id, ',');
+        getline(ss, oid, ',');
+        getline(ss, mk, ',');
+        getline(ss, mdl, ',');
+        getline(ss, plate, ',');
+        getline(ss, cap, ',');
         int capInt = 1;
-        try { capInt = std::stoi(cap); } catch (...) { continue; }
-        vehicleMap[id] = new Car(id, oid, mk, mdl, plate, capInt);
-        bumpCounter(id, nextVehicleId, "VEH-");
+        try { capInt = stoi(cap); } catch (...) { continue; }
+        vehicles[id] = new Car(id, oid, mk, mdl, plate, capInt);
+        bumpId(id, nextVeh, "VEH-");
     }
 }
 
-void CarpoolSystem::loadBikesFromFile(const std::string& path) {
-    std::ifstream f(path);
-    if (!f.is_open()) { std::cout << "  [warn] cannot open " << path << "\n"; return; }
-    std::string line;
-    while (std::getline(f, line)) {
+void CarpoolSystem::loadBikesFromFile(const string& path) {
+    ifstream f(path);
+    if (!f.is_open()) { cout << "  [warn] cannot open " << path << "\n"; return; }
+    string line;
+    while (getline(f, line)) {
         if (line.empty() || line[0] == '#') continue;
-        std::stringstream ss(line);
-        std::string id, oid, mk, mdl, plate, cap;
-        std::getline(ss, id,    ',');
-        std::getline(ss, oid,   ',');
-        std::getline(ss, mk,    ',');
-        std::getline(ss, mdl,   ',');
-        std::getline(ss, plate, ',');
-        std::getline(ss, cap,   ',');
+        stringstream ss(line);
+        string id, oid, mk, mdl, plate, cap;
+        getline(ss, id, ',');
+        getline(ss, oid, ',');
+        getline(ss, mk, ',');
+        getline(ss, mdl, ',');
+        getline(ss, plate, ',');
+        getline(ss, cap, ',');
         int capInt = 1;
-        try { capInt = std::stoi(cap); } catch (...) { continue; }
-        vehicleMap[id] = new Bike(id, oid, mk, mdl, plate, capInt);
-        bumpCounter(id, nextVehicleId, "VEH-");
+        try { capInt = stoi(cap); } catch (...) { continue; }
+        vehicles[id] = new Bike(id, oid, mk, mdl, plate, capInt);
+        bumpId(id, nextVeh, "VEH-");
     }
 }
 
-void CarpoolSystem::loadRidesFromFile(const std::string& path) {
-    std::ifstream f(path);
-    if (!f.is_open()) { std::cout << "  [warn] cannot open " << path << "\n"; return; }
-    std::string line;
-    while (std::getline(f, line)) {
+void CarpoolSystem::loadRidesFromFile(const string& path) {
+    ifstream f(path);
+    if (!f.is_open()) { cout << "  [warn] cannot open " << path << "\n"; return; }
+    string line;
+    while (getline(f, line)) {
         if (line.empty() || line[0] == '#') continue;
-        std::stringstream ss(line);
-        std::string id, drv, veh, dateOrTime, timeOrPick, pickOrDrop, dropOrPref;
-        std::string pref, stat, seats, pax;
-        std::getline(ss, id,          ',');
-        std::getline(ss, drv,         ',');
-        std::getline(ss, veh,         ',');
-        std::getline(ss, dateOrTime,  ',');
-        std::getline(ss, timeOrPick,  ',');
+        stringstream ss(line);
+        string id, drv, veh, dateOrTime, timeOrPick;
+        string gpStr, stStr, seatsStr, paxStr;
+        getline(ss, id, ',');
+        getline(ss, drv, ',');
+        getline(ss, veh, ',');
+        getline(ss, dateOrTime, ',');
+        getline(ss, timeOrPick, ',');
 
-        // '-' means new format (YYYY-MM-DD date field); otherwise old format (HH:MM time field)
-        std::string rideDate, rideTime;
-        std::string pick, drop;
-        if (dateOrTime.find('-') != std::string::npos) {
+        // '-' in field 4 means new format (has YYYY-MM-DD date)
+        string rideDate, rideTime;
+        string pick, drop;
+        if (dateOrTime.find('-') != string::npos) {
             rideDate = dateOrTime;
             rideTime = timeOrPick;
-            std::getline(ss, pick,  ',');
-            std::getline(ss, drop,  ',');
+            getline(ss, pick, ',');
+            getline(ss, drop, ',');
         } else {
             rideDate = nowDate();
             rideTime = dateOrTime;
             pick = timeOrPick;
-            std::getline(ss, drop,  ',');
+            getline(ss, drop, ',');
         }
 
-        std::getline(ss, pref,  ',');
-        std::getline(ss, stat,  ',');
-        std::getline(ss, seats, ',');
-        std::getline(ss, pax,   ',');
+        getline(ss, gpStr, ',');
+        getline(ss, stStr, ',');
+        getline(ss, seatsStr, ',');
+        getline(ss, paxStr, ',');
 
-        GenderPref gp = (pref == "0") ? GenderPref::BOYS_ONLY :
-                        (pref == "1") ? GenderPref::GIRLS_ONLY : GenderPref::HYBRID;
-        RideStatus rs = (stat == "0") ? RideStatus::OPEN :
-                        (stat == "1") ? RideStatus::FULL :
-                        (stat == "2") ? RideStatus::COMPLETED : RideStatus::CANCELED;
+        GenderPref gp = (gpStr == "0") ? GenderPref::BOYS_ONLY :
+                        (gpStr == "1") ? GenderPref::GIRLS_ONLY : GenderPref::HYBRID;
+        RideStatus rs = (stStr == "0") ? RideStatus::OPEN :
+                        (stStr == "1") ? RideStatus::FULL :
+                        (stStr == "2") ? RideStatus::COMPLETED : RideStatus::CANCELED;
 
         int pickInt = 0, dropInt = 0, seatsInt = 0;
-        try { pickInt  = std::stoi(pick);  } catch (...) { continue; }
-        try { dropInt  = std::stoi(drop);  } catch (...) { continue; }
-        try { seatsInt = std::stoi(seats); } catch (...) { continue; }
+        try { pickInt  = stoi(pick);     } catch (...) { continue; }
+        try { dropInt  = stoi(drop);     } catch (...) { continue; }
+        try { seatsInt = stoi(seatsStr); } catch (...) { continue; }
 
         Ride ride(id, drv, veh, rideDate, rideTime,
-                  intToArea(pickInt), intToArea(dropInt),
-                  gp, 0);
-        ride.setSeatsLeft(seatsInt);
+                  intToArea(pickInt), intToArea(dropInt), gp, 0);
+        ride.setSeats(seatsInt);
         ride.setStatus(rs);
 
-        if (!pax.empty()) {
-            std::stringstream pss(pax);
-            std::string pid;
-            while (std::getline(pss, pid, ';'))
+        if (!paxStr.empty()) {
+            stringstream pss(paxStr);
+            string pid;
+            while (getline(pss, pid, ';'))
                 if (!pid.empty()) ride.rawAddPassenger(pid);
         }
 
-        rideMap[id] = ride;
-        bumpCounter(id, nextRideId, "RID-");
+        rides[id] = ride;
+        bumpId(id, nextRid, "RID-");
     }
 }
 
-void CarpoolSystem::saveStudentsToFile(const std::string& path) const {
-    std::ofstream f(path);
-    for (auto& [id, s] : studentMap) {
+void CarpoolSystem::saveStudentsToFile(const string& path) const {
+    ofstream f(path);
+    for (auto& [id, s] : students) {
         f << id << ","
           << s.getName() << ","
           << s.getPhoneNumber() << ","
           << (s.getGender() == Gender::MALE ? "0" : "1") << ","
           << (s.getIsDriver() ? "1" : "0") << ","
-          << s.getRidesCompleted() << "\n";
+          << s.getRidesDone() << "\n";
     }
 }
 
-void CarpoolSystem::saveRidesToFile(const std::string& path) const {
-    std::ofstream f(path);
-    for (auto& [id, r] : rideMap) {
-        int gpInt = (r.getGenderPref() == GenderPref::BOYS_ONLY)  ? 0 :
-                    (r.getGenderPref() == GenderPref::GIRLS_ONLY) ? 1 : 2;
+void CarpoolSystem::saveRidesToFile(const string& path) const {
+    ofstream f(path);
+    for (auto& [id, r] : rides) {
+        int gpInt = (r.getPref() == GenderPref::BOYS_ONLY) ? 0 :
+                    (r.getPref() == GenderPref::GIRLS_ONLY) ? 1 : 2;
         int stInt = (r.getStatus() == RideStatus::OPEN)      ? 0 :
                     (r.getStatus() == RideStatus::FULL)      ? 1 :
                     (r.getStatus() == RideStatus::COMPLETED) ? 2 : 3;
 
         f << id << "," << r.getDriverId() << "," << r.getVehicleId() << ","
           << r.getRideDate() << "," << r.getRideTime() << ","
-          << areaToInt(r.getPickupArea()) << ","
-          << areaToInt(r.getDropOffArea()) << "," << gpInt << ","
-          << stInt << "," << r.getSeatsLeft();
+          << areaToInt(r.getPickup()) << ","
+          << areaToInt(r.getDropoff()) << "," << gpInt << ","
+          << stInt << "," << r.getSeats();
 
         auto& pax = r.getPassengers();
         if (!pax.empty()) {
@@ -194,36 +194,36 @@ void CarpoolSystem::saveRidesToFile(const std::string& path) const {
     }
 }
 
-void CarpoolSystem::saveCarsToFile(const std::string& path) const {
-    std::ofstream f(path);
-    for (auto& [id, v] : vehicleMap) {
+void CarpoolSystem::saveCarsToFile(const string& path) const {
+    ofstream f(path);
+    for (auto& [id, v] : vehicles) {
         if (v->getType() != "Car") continue;
         f << id << "," << v->getOwnerId() << "," << v->getMake() << ","
           << v->getModel() << "," << v->getLicensePlate() << "," << v->getCapacity() << "\n";
     }
 }
 
-void CarpoolSystem::saveBikesToFile(const std::string& path) const {
-    std::ofstream f(path);
-    for (auto& [id, v] : vehicleMap) {
+void CarpoolSystem::saveBikesToFile(const string& path) const {
+    ofstream f(path);
+    for (auto& [id, v] : vehicles) {
         if (v->getType() != "Bike") continue;
         f << id << "," << v->getOwnerId() << "," << v->getMake() << ","
           << v->getModel() << "," << v->getLicensePlate() << "," << v->getCapacity() << "\n";
     }
 }
 
-std::string CarpoolSystem::createStudent(const std::string& name, const std::string& phone,
-                                          Gender g, bool isDriver) {
-    std::string id = "STU-" + std::to_string(nextStudentId++);
-    studentMap[id] = Student(id, name, phone, g, isDriver, 0);
+string CarpoolSystem::createStudent(const string& name, const string& phone,
+                                     Gender g, bool isDriver) {
+    string id = "STU-" + to_string(nextStu++);
+    students[id] = Student(id, name, phone, g, isDriver, 0);
     saveStudentsToFile("data/students.csv");
     return id;
 }
 
-bool CarpoolSystem::updateStudent(const std::string& id, const std::string& name,
-                                   const std::string& phone, Gender g) {
-    auto it = studentMap.find(id);
-    if (it == studentMap.end()) return false;
+bool CarpoolSystem::updateStudent(const string& id, const string& name,
+                                   const string& phone, Gender g) {
+    auto it = students.find(id);
+    if (it == students.end()) return false;
     it->second.setName(name);
     it->second.setPhone(phone);
     it->second.setGender(g);
@@ -231,9 +231,9 @@ bool CarpoolSystem::updateStudent(const std::string& id, const std::string& name
     return true;
 }
 
-bool CarpoolSystem::updateVehicle(const std::string& ownerId, const std::string& mk,
-                                   const std::string& mdl, const std::string& plate, int cap) {
-    for (auto& [vid, veh] : vehicleMap) {
+bool CarpoolSystem::updateVehicle(const string& ownerId, const string& mk,
+                                   const string& mdl, const string& plate, int cap) {
+    for (auto& [vid, veh] : vehicles) {
         if (veh->getOwnerId() == ownerId) {
             veh->setMake(mk);
             veh->setModel(mdl);
@@ -247,37 +247,37 @@ bool CarpoolSystem::updateVehicle(const std::string& ownerId, const std::string&
     return false;
 }
 
-bool CarpoolSystem::deleteStudent(const std::string& id) {
-    auto sit = studentMap.find(id);
-    if (sit == studentMap.end()) return false;
+bool CarpoolSystem::deleteStudent(const string& id) {
+    auto sit = students.find(id);
+    if (sit == students.end()) return false;
 
     bool isDrv = sit->second.getIsDriver();
 
     if (isDrv) {
-        // notify passengers, remove all rides this driver owns
-        std::vector<std::string> toRemove;
-        for (auto& [rid, ride] : rideMap) {
+        // notify passengers then wipe their rides
+        vector<string> toRemove;
+        for (auto& [rid, ride] : rides) {
             if (ride.getDriverId() != id) continue;
             if (ride.getStatus() == RideStatus::OPEN || ride.getStatus() == RideStatus::FULL) {
                 for (auto& pid : ride.getPassengers())
-                    notifMap[pid].emplace_back(pid,
+                    notifs[pid].emplace_back(pid,
                         "CANCELED: ride " + rid + " canceled — driver deleted their account.");
             }
             toRemove.push_back(rid);
         }
-        for (auto& rid : toRemove) rideMap.erase(rid);
+        for (auto& rid : toRemove) rides.erase(rid);
     } else {
-        for (auto& [rid, ride] : rideMap)
+        for (auto& [rid, ride] : rides)
             ride.removePassenger(id);
     }
 
-    std::vector<std::string> vehToRemove;
-    for (auto& [vid, veh] : vehicleMap)
+    vector<string> vehToRemove;
+    for (auto& [vid, veh] : vehicles)
         if (veh->getOwnerId() == id) vehToRemove.push_back(vid);
-    for (auto& vid : vehToRemove) { delete vehicleMap[vid]; vehicleMap.erase(vid); }
+    for (auto& vid : vehToRemove) { delete vehicles[vid]; vehicles.erase(vid); }
 
-    studentMap.erase(id);
-    notifMap.erase(id);
+    students.erase(id);
+    notifs.erase(id);
 
     saveStudentsToFile("data/students.csv");
     saveCarsToFile("data/cars.csv");
@@ -286,58 +286,58 @@ bool CarpoolSystem::deleteStudent(const std::string& id) {
     return true;
 }
 
-std::string CarpoolSystem::addCar(const std::string& ownerId, const std::string& make,
-                                   const std::string& model, const std::string& plate, int capacity) {
-    std::string id = "VEH-" + std::to_string(nextVehicleId++);
-    vehicleMap[id] = new Car(id, ownerId, make, model, plate, capacity);
+string CarpoolSystem::addCar(const string& ownerId, const string& make,
+                              const string& model, const string& plate, int cap) {
+    string id = "VEH-" + to_string(nextVeh++);
+    vehicles[id] = new Car(id, ownerId, make, model, plate, cap);
     saveCarsToFile("data/cars.csv");
     return id;
 }
 
-std::string CarpoolSystem::addBike(const std::string& ownerId, const std::string& make,
-                                    const std::string& model, const std::string& plate, int capacity) {
-    std::string id = "VEH-" + std::to_string(nextVehicleId++);
-    vehicleMap[id] = new Bike(id, ownerId, make, model, plate, capacity);
+string CarpoolSystem::addBike(const string& ownerId, const string& make,
+                               const string& model, const string& plate, int cap) {
+    string id = "VEH-" + to_string(nextVeh++);
+    vehicles[id] = new Bike(id, ownerId, make, model, plate, cap);
     saveBikesToFile("data/bikes.csv");
     return id;
 }
 
-std::string CarpoolSystem::createRide(const std::string& driverId, const std::string& vehicleId,
-                                       const std::string& rideDate, const std::string& rideTime,
-                                       Area pickup, Area dropoff, GenderPref pref) {
-    if (studentMap.find(driverId)  == studentMap.end()) return "";
-    if (vehicleMap.find(vehicleId) == vehicleMap.end()) return "";
-    if (!getDriverActiveRide(driverId).empty())          return "";
-    if (pickup == dropoff)                               return "";
-    if (!isIBACampus(pickup) && !isIBACampus(dropoff))  return "";
-    if (isDateTimePast(rideDate, rideTime))              return "";
+string CarpoolSystem::createRide(const string& driverId, const string& vehicleId,
+                                  const string& rideDate, const string& rideTime,
+                                  Area pickup, Area dropoff, GenderPref pref) {
+    if (students.find(driverId)  == students.end()) return "";
+    if (vehicles.find(vehicleId) == vehicles.end()) return "";
+    if (!activeRide(driverId).empty())               return "";
+    if (pickup == dropoff)                           return "";
+    if (!isCampus(pickup) && !isCampus(dropoff))     return "";
+    if (isPast(rideDate, rideTime))                  return "";
 
-    int seats = vehicleMap.at(vehicleId)->getCapacity();
-    std::string rid = "RID-" + std::to_string(nextRideId++);
-    rideMap[rid] = Ride(rid, driverId, vehicleId, rideDate, rideTime, pickup, dropoff, pref, seats);
+    int cap = vehicles.at(vehicleId)->getCapacity();
+    string rid = "RID-" + to_string(nextRid++);
+    rides[rid] = Ride(rid, driverId, vehicleId, rideDate, rideTime, pickup, dropoff, pref, cap);
     saveRidesToFile("data/rides.csv");
     return rid;
 }
 
-bool CarpoolSystem::bookRide(const std::string& rideId, const std::string& studentId) {
-    auto rit = rideMap.find(rideId);
-    auto sit = studentMap.find(studentId);
-    if (rit == rideMap.end() || sit == studentMap.end()) return false;
+bool CarpoolSystem::bookRide(const string& rideId, const string& stuId) {
+    auto rit = rides.find(rideId);
+    auto sit = students.find(stuId);
+    if (rit == rides.end() || sit == students.end()) return false;
     if (rit->second.getStatus() != RideStatus::OPEN) return false;
 
-    GenderPref pref = rit->second.getGenderPref();
-    Gender     gen  = sit->second.getGender();
-    if (pref == GenderPref::BOYS_ONLY  && gen == Gender::FEMALE) return false;
-    if (pref == GenderPref::GIRLS_ONLY && gen == Gender::MALE)   return false;
+    GenderPref rPref = rit->second.getPref();
+    Gender     gen   = sit->second.getGender();
+    if (rPref == GenderPref::BOYS_ONLY  && gen == Gender::FEMALE) return false;
+    if (rPref == GenderPref::GIRLS_ONLY && gen == Gender::MALE)   return false;
 
-    if (rit->second.getDriverId() == studentId) return false;
+    if (rit->second.getDriverId() == stuId) return false;
 
-    if (!rit->second.addPassenger(studentId)) return false;
+    if (!rit->second.addPassenger(stuId)) return false;
 
-    notifMap[studentId].emplace_back(studentId,
+    notifs[stuId].emplace_back(stuId,
         "Ride booked: " + rideId + "  " +
-        areaToStr(rit->second.getPickupArea()) + " -> " +
-        areaToStr(rit->second.getDropOffArea()) +
+        areaToStr(rit->second.getPickup()) + " -> " +
+        areaToStr(rit->second.getDropoff()) +
         "  on " + rit->second.getRideDate() +
         "  at " + rit->second.getRideTime());
 
@@ -345,23 +345,23 @@ bool CarpoolSystem::bookRide(const std::string& rideId, const std::string& stude
     return true;
 }
 
-bool CarpoolSystem::cancelRide(const std::string& rideId) {
-    auto it = rideMap.find(rideId);
-    if (it == rideMap.end()) return false;
+bool CarpoolSystem::cancelRide(const string& rideId) {
+    auto it = rides.find(rideId);
+    if (it == rides.end()) return false;
 
     auto& ride = it->second;
     if (ride.getStatus() != RideStatus::OPEN && ride.getStatus() != RideStatus::FULL)
         return false;
 
-    if (isDateTimePast(ride.getRideDate(), ride.getRideTime())) return false;
+    if (isPast(ride.getRideDate(), ride.getRideTime())) return false;
 
     ride.markCanceled();
 
     for (auto& pid : ride.getPassengers()) {
-        notifMap[pid].emplace_back(pid,
+        notifs[pid].emplace_back(pid,
             "CANCELED: ride " + rideId + " (" +
-            areaToStr(ride.getPickupArea()) + " -> " +
-            areaToStr(ride.getDropOffArea()) + " on " +
+            areaToStr(ride.getPickup()) + " -> " +
+            areaToStr(ride.getDropoff()) + " on " +
             ride.getRideDate() + " at " +
             ride.getRideTime() + ") was canceled by driver.");
     }
@@ -373,26 +373,25 @@ bool CarpoolSystem::cancelRide(const std::string& rideId) {
 void CarpoolSystem::checkAutoComplete() {
     bool changed = false;
 
-    for (auto& [id, ride] : rideMap) {
+    for (auto& [id, ride] : rides) {
         if (ride.getStatus() != RideStatus::OPEN && ride.getStatus() != RideStatus::FULL)
             continue;
-        if (!isDateTimePast(ride.getRideDate(), ride.getRideTime()))
+        if (!isPast(ride.getRideDate(), ride.getRideTime()))
             continue;
 
         ride.markCompleted();
         changed = true;
 
-        for (auto& pid : ride.getAllParticipants()) {
-            auto sit = studentMap.find(pid);
-            if (sit != studentMap.end())
-                sit->second.incrementRidesCompleted();
+        for (auto& pid : ride.everyone()) {
+            auto sit = students.find(pid);
+            if (sit != students.end()) sit->second.addRide();
         }
 
         for (auto& pid : ride.getPassengers()) {
-            notifMap[pid].emplace_back(pid,
+            notifs[pid].emplace_back(pid,
                 "Completed: ride " + id + " (" +
-                areaToStr(ride.getPickupArea()) + " -> " +
-                areaToStr(ride.getDropOffArea()) + ") is done.");
+                areaToStr(ride.getPickup()) + " -> " +
+                areaToStr(ride.getDropoff()) + ") is done.");
         }
     }
 
@@ -402,8 +401,8 @@ void CarpoolSystem::checkAutoComplete() {
     }
 }
 
-std::string CarpoolSystem::getDriverActiveRide(const std::string& driverId) const {
-    for (auto& [id, r] : rideMap) {
+string CarpoolSystem::activeRide(const string& driverId) const {
+    for (auto& [id, r] : rides) {
         if (r.getDriverId() == driverId &&
             (r.getStatus() == RideStatus::OPEN || r.getStatus() == RideStatus::FULL))
             return id;
@@ -411,37 +410,37 @@ std::string CarpoolSystem::getDriverActiveRide(const std::string& driverId) cons
     return "";
 }
 
-std::string CarpoolSystem::getVehicleForDriver(const std::string& driverId) const {
-    for (auto& [id, v] : vehicleMap)
+string CarpoolSystem::vehicleOf(const string& driverId) const {
+    for (auto& [id, v] : vehicles)
         if (v->getOwnerId() == driverId) return id;
     return "";
 }
 
-std::vector<std::string> CarpoolSystem::searchRides(Area pickup, Area dropoff,
-                                                     const std::string& requestedTime) const {
-    std::vector<std::string> results;
-    int reqMins = timeToMins(requestedTime);
-    for (auto& [id, r] : rideMap) {
+vector<string> CarpoolSystem::searchRides(Area pickup, Area dropoff,
+                                           const string& wantTime) const {
+    vector<string> results;
+    int want = toMins(wantTime);
+    for (auto& [id, r] : rides) {
         if (r.getStatus() != RideStatus::OPEN && r.getStatus() != RideStatus::FULL) continue;
-        if (r.getPickupArea() != pickup || r.getDropOffArea() != dropoff) continue;
-        if (std::abs(timeToMins(r.getRideTime()) - reqMins) <= 30)
+        if (r.getPickup() != pickup || r.getDropoff() != dropoff) continue;
+        if (abs(toMins(r.getRideTime()) - want) <= 30)
             results.push_back(id);
     }
-    // closest to requested time; ties broken by Ride::operator<
-    std::sort(results.begin(), results.end(), [&](const std::string& a, const std::string& b) {
-        const Ride& ra = rideMap.at(a);
-        const Ride& rb = rideMap.at(b);
-        int da = std::abs(timeToMins(ra.getRideTime()) - reqMins);
-        int db = std::abs(timeToMins(rb.getRideTime()) - reqMins);
+    // sort by proximity to wantTime; ties go chronological
+    sort(results.begin(), results.end(), [&](const string& a, const string& b) {
+        const Ride& ra = rides.at(a);
+        const Ride& rb = rides.at(b);
+        int da = abs(toMins(ra.getRideTime()) - want);
+        int db = abs(toMins(rb.getRideTime()) - want);
         if (da != db) return da < db;
         return ra < rb;
     });
     return results;
 }
 
-std::vector<std::string> CarpoolSystem::getDriverHistory(const std::string& driverId) const {
-    std::vector<std::string> hist;
-    for (auto& [id, r] : rideMap) {
+vector<string> CarpoolSystem::driverHistory(const string& driverId) const {
+    vector<string> hist;
+    for (auto& [id, r] : rides) {
         if (r.getDriverId() == driverId &&
             (r.getStatus() == RideStatus::COMPLETED || r.getStatus() == RideStatus::CANCELED))
             hist.push_back(id);
@@ -449,162 +448,159 @@ std::vector<std::string> CarpoolSystem::getDriverHistory(const std::string& driv
     return hist;
 }
 
-const Student* CarpoolSystem::getStudent(const std::string& id) const {
-    auto it = studentMap.find(id);
-    return (it != studentMap.end()) ? &it->second : nullptr;
+const Student* CarpoolSystem::getStudent(const string& id) const {
+    auto it = students.find(id);
+    return (it != students.end()) ? &it->second : nullptr;
 }
 
-Ride* CarpoolSystem::getRide(const std::string& id) {
-    auto it = rideMap.find(id);
-    return (it != rideMap.end()) ? &it->second : nullptr;
+Ride* CarpoolSystem::getRide(const string& id) {
+    auto it = rides.find(id);
+    return (it != rides.end()) ? &it->second : nullptr;
 }
 
-const Ride* CarpoolSystem::getRide(const std::string& id) const {
-    auto it = rideMap.find(id);
-    return (it != rideMap.end()) ? &it->second : nullptr;
+const Ride* CarpoolSystem::getRide(const string& id) const {
+    auto it = rides.find(id);
+    return (it != rides.end()) ? &it->second : nullptr;
 }
 
-const Vehicle* CarpoolSystem::getVehicle(const std::string& id) const {
-    auto it = vehicleMap.find(id);
-    return (it != vehicleMap.end()) ? it->second : nullptr;
+const Vehicle* CarpoolSystem::getVehicle(const string& id) const {
+    auto it = vehicles.find(id);
+    return (it != vehicles.end()) ? it->second : nullptr;
 }
 
-const std::vector<Notification>& CarpoolSystem::getNotifications(const std::string& sid) const {
-    auto it = notifMap.find(sid);
-    return (it != notifMap.end()) ? it->second : EMPTY_NOTIFS;
+const vector<Notification>& CarpoolSystem::getNotifications(const string& stuId) const {
+    auto it = notifs.find(stuId);
+    return (it != notifs.end()) ? it->second : NO_NOTIFS;
 }
 
-const std::map<std::string, Ride>&    CarpoolSystem::getRideMap()    const { return rideMap; }
-const std::map<std::string, Student>& CarpoolSystem::getStudentMap() const { return studentMap; }
+const map<string, Ride>&    CarpoolSystem::getRides()    const { return rides; }
+const map<string, Student>& CarpoolSystem::getStudents() const { return students; }
 
 void CarpoolSystem::showAvailableRides() const {
-    std::cout << "\n-- available rides --\n";
+    cout << "\n-- available rides --\n";
     bool any = false;
-    for (auto& [id, r] : rideMap) {
+    for (auto& [id, r] : rides) {
         if (r.getStatus() == RideStatus::OPEN || r.getStatus() == RideStatus::FULL) {
-            r.displayRide(); std::cout << "  ---\n"; any = true;
+            r.displayRide(); cout << "  ---\n"; any = true;
         }
     }
-    if (!any) std::cout << "  none.\n";
+    if (!any) cout << "  none.\n";
 }
 
 void CarpoolSystem::showStudents() const {
-    std::cout << "\n-- registered students --\n";
-    for (auto& [id, s] : studentMap) { s.displayProfile(); std::cout << "  ---\n"; }
+    cout << "\n-- registered students --\n";
+    for (auto& [id, s] : students) { s.displayProfile(); cout << "  ---\n"; }
 }
 
-void CarpoolSystem::showNotifications(const std::string& sid) const {
-    auto it = studentMap.find(sid);
-    if (it == studentMap.end()) { std::cout << "  student not found.\n"; return; }
-    std::cout << "\n-- notifications for " << it->second.getName() << " --\n";
-    auto& notifs = getNotifications(sid);
-    if (notifs.empty()) { std::cout << "  none.\n"; return; }
-    for (auto& n : notifs) n.display();
+void CarpoolSystem::showNotifications(const string& stuId) const {
+    auto it = students.find(stuId);
+    if (it == students.end()) { cout << "  student not found.\n"; return; }
+    cout << "\n-- notifications for " << it->second.getName() << " --\n";
+    auto& ns = getNotifications(stuId);
+    if (ns.empty()) { cout << "  none.\n"; return; }
+    for (auto& n : ns) n.display();
 }
 
-std::map<std::string, int> CarpoolSystem::countSingletons() {
-    std::map<std::string, int> freq;
-    for (auto& [id, r] : rideMap) {
+map<string, int> CarpoolSystem::countSingles() {
+    map<string, int> freq;
+    for (auto& [id, r] : rides) {
         if (r.getStatus() != RideStatus::COMPLETED) continue;
-        for (auto& pid : r.getAllParticipants()) freq[pid]++;
+        for (auto& pid : r.everyone()) freq[pid]++;
     }
     return freq;
 }
 
-std::string CarpoolSystem::idToName(const std::string& id) {
-    auto it = studentMap.find(id);
-    return (it != studentMap.end()) ? it->second.getName() : id;
+string CarpoolSystem::idToName(const string& id) {
+    auto it = students.find(id);
+    return (it != students.end()) ? it->second.getName() : id;
 }
 
-// backtracking: builds all k-combinations from candidates, counts each across transactions
-void CarpoolSystem::generateItemsets(
-        const std::vector<std::vector<std::string>>& transactions,
-        std::vector<std::string>& current,
-        int startIdx,
-        const std::vector<std::string>& candidates,
+// count how often each k-combo appears across transactions
+void CarpoolSystem::genItemsets(
+        const vector<vector<string>>& txns,
+        vector<string>& cur,
+        int start,
+        const vector<string>& cands,
         int k,
-        std::map<std::vector<std::string>, int>& freqMap) {
+        map<vector<string>, int>& freq) {
 
-    if ((int)current.size() == k) {
+    if ((int)cur.size() == k) {
         int count = 0;
-        for (auto& trans : transactions) {
-            bool allPresent = true;
-            for (auto& item : current) {
-                if (std::find(trans.begin(), trans.end(), item) == trans.end()) {
-                    allPresent = false;
-                    break;
-                }
+        for (auto& tx : txns) {
+            bool ok = true;
+            for (auto& item : cur) {
+                if (find(tx.begin(), tx.end(), item) == tx.end()) { ok = false; break; }
             }
-            if (allPresent) count++;
+            if (ok) count++;
         }
-        if (count > 0) freqMap[current] = count;
+        if (count > 0) freq[cur] = count;
         return;
     }
 
-    for (int i = startIdx; i < (int)candidates.size(); ++i) {
-        current.push_back(candidates[i]);
-        generateItemsets(transactions, current, i + 1, candidates, k, freqMap);
-        current.pop_back();
+    for (int i = start; i < (int)cands.size(); ++i) {
+        cur.push_back(cands[i]);
+        genItemsets(txns, cur, i + 1, cands, k, freq);
+        cur.pop_back();
     }
 }
 
 void CarpoolSystem::runApriori(int minSupport) {
-    std::cout << "\n-- apriori frequent traveller analysis --\n"
-              << "  min support: " << minSupport << "\n\n";
+    cout << "\n-- apriori frequent traveller analysis --\n"
+         << "  min support: " << minSupport << "\n\n";
 
-    std::vector<std::vector<std::string>> transactions;
-    for (auto& [id, r] : rideMap) {
+    vector<vector<string>> txns;
+    for (auto& [id, r] : rides) {
         if (r.getStatus() != RideStatus::COMPLETED) continue;
-        auto parts = r.getAllParticipants();
-        std::sort(parts.begin(), parts.end());
-        transactions.push_back(parts);
+        auto parts = r.everyone();
+        sort(parts.begin(), parts.end());
+        txns.push_back(parts);
     }
-    int total = (int)transactions.size();
-    if (total == 0) { std::cout << "  no completed rides yet.\n"; return; }
+    int total = (int)txns.size();
+    if (total == 0) { cout << "  no completed rides yet.\n"; return; }
 
-    std::cout << "  step 1: frequent individual students\n";
-    auto singles = countSingletons();
-    std::vector<std::string> freqIds;
+    cout << "  step 1: frequent individual students\n";
+    auto singles = countSingles();
+    vector<string> freqIds;
     for (auto& [id, cnt] : singles) {
         if (cnt >= minSupport) {
             freqIds.push_back(id);
-            std::cout << "    " << idToName(id)
-                      << "  count=" << cnt
-                      << "  support=" << (int)(100.0 * cnt / total) << "%\n";
+            cout << "    " << idToName(id)
+                 << "  count=" << cnt
+                 << "  support=" << (int)(100.0 * cnt / total) << "%\n";
         }
     }
-    std::sort(freqIds.begin(), freqIds.end());
+    sort(freqIds.begin(), freqIds.end());
 
-    std::cout << "\n  step 2: frequent pairs\n";
-    std::map<std::vector<std::string>, int> pairMap;
-    std::vector<std::string> current;
-    generateItemsets(transactions, current, 0, freqIds, 2, pairMap);
+    cout << "\n  step 2: frequent pairs\n";
+    map<vector<string>, int> pairs;
+    vector<string> cur;
+    genItemsets(txns, cur, 0, freqIds, 2, pairs);
     bool foundPair = false;
-    for (auto& [itemset, cnt] : pairMap) {
+    for (auto& [set, cnt] : pairs) {
         if (cnt >= minSupport) {
             foundPair = true;
             int supp = (int)(100.0 * cnt / total);
-            std::cout << "    { " << idToName(itemset[0]) << " & " << idToName(itemset[1]) << " }"
-                      << "  count=" << cnt << "  support=" << supp << "%\n";
+            cout << "    { " << idToName(set[0]) << " & " << idToName(set[1]) << " }"
+                 << "  count=" << cnt << "  support=" << supp << "%\n";
             if (supp >= 50)
-                std::cout << "    -> suggest placing them in the same car\n";
+                cout << "    -> suggest placing them in the same car\n";
         }
     }
-    if (!foundPair) std::cout << "    none above threshold.\n";
+    if (!foundPair) cout << "    none above threshold.\n";
 
-    std::cout << "\n  step 3: frequent triples\n";
-    std::map<std::vector<std::string>, int> tripleMap;
-    generateItemsets(transactions, current, 0, freqIds, 3, tripleMap);
+    cout << "\n  step 3: frequent triples\n";
+    map<vector<string>, int> triples;
+    genItemsets(txns, cur, 0, freqIds, 3, triples);
     bool foundTriple = false;
-    for (auto& [itemset, cnt] : tripleMap) {
+    for (auto& [set, cnt] : triples) {
         if (cnt >= minSupport) {
             foundTriple = true;
-            std::cout << "    { " << idToName(itemset[0])
-                      << " & " << idToName(itemset[1])
-                      << " & " << idToName(itemset[2]) << " }"
-                      << "  count=" << cnt
-                      << "  support=" << (int)(100.0 * cnt / total) << "%\n";
+            cout << "    { " << idToName(set[0])
+                 << " & " << idToName(set[1])
+                 << " & " << idToName(set[2]) << " }"
+                 << "  count=" << cnt
+                 << "  support=" << (int)(100.0 * cnt / total) << "%\n";
         }
     }
-    if (!foundTriple) std::cout << "    none above threshold.\n";
+    if (!foundTriple) cout << "    none above threshold.\n";
 }

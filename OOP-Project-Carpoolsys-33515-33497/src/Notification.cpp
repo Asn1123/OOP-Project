@@ -1,12 +1,13 @@
 #include "Notification.h"
 #include <iostream>
+using namespace std;
 
-Notification::Notification(std::string rid, std::string msg)
-    : recipientId(rid), message(msg) {}
+Notification::Notification(string id, string msg)
+    : toId(id), message(msg) {}
 
-std::string Notification::getRecipientId() const { return recipientId; }
-std::string Notification::getMessage()     const { return message; }
+string Notification::getTo()      const { return toId; }
+string Notification::getMessage() const { return message; }
 
 void Notification::display() const {
-    std::cout << "  [!] " << message << "\n";
+    cout << "  [!] " << message << "\n";
 }

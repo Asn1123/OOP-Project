@@ -67,7 +67,7 @@ PROJECT STRUCTURE
     Vehicle.cpp
     Car.cpp / Bike.cpp
     Notification.cpp
-    gui.cpp           -- full Raylib GUI (~1250 lines)
+    gui.cpp           -- full Raylib GUI (~700 lines)
     win_icon.cpp      -- sets exe and taskbar icon
 
   data/
@@ -77,9 +77,10 @@ PROJECT STRUCTURE
     rides.csv
 
   raylib/             -- Raylib headers and static library
+  app.rc              -- icon resource source
   app_rc.o            -- pre-compiled icon resource
   carpool_icon.ico    -- application icon
-  Institute_of_Business_Administration,_Karachi_(logo).png  -- IBA logo
+  ABeeZee-Regular.otf -- font used by the GUI
   Makefile
 
 
@@ -98,26 +99,26 @@ BUILD
 
 RUN
 ---
-  Ensure the following are in the same directory as carpool.exe:
+  Make sure these are in the same directory as carpool.exe:
 
     data/               (folder with CSV files)
-    Institute_of_Business_Administration,_Karachi_(logo).png
+    ABeeZee-Regular.otf (font file)
 
   Then run:
 
     carpool.exe
 
-  On first run the data/ CSVs may be empty; register a driver and
-  a passenger to get started.
+  On first run the CSVs are empty; register a driver and a passenger
+  to get started.
 
 
 CSV FORMAT (for manual inspection)
 -----------------------------------
-  students.csv   id, name, phone, gender(0=M/1=F), isDriver(0/1), ridesCompleted
+  students.csv   id, name, phone, gender(0=M/1=F), isDriver(0/1), ridesDone
   cars.csv       id, ownerId, make, model, plate, capacity
   bikes.csv      id, ownerId, make, model, plate, capacity
   rides.csv      id, driverId, vehicleId, date(YYYY-MM-DD), time(HH:MM),
-                 pickupArea, dropOffArea, genderPref, status, seatsLeft
+                 pickup, dropoff, pref, status, seats
                  [, pass1;pass2;...]
 
 

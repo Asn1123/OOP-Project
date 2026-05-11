@@ -2,37 +2,38 @@
 #include <string>
 #include <ostream>
 #include "enums.h"
+using namespace std;
 
 class Student {
 private:
-    std::string studentId;
-    std::string name;
-    std::string phoneNumber;
-    Gender      gender;
-    bool        isDriver;
-    int         ridesCompleted;
+    string studentId;
+    string name;
+    string phoneNumber;
+    Gender gender;
+    bool isDriver;
+    int ridesDone;
 
 public:
     Student();
-    Student(std::string id, std::string n, std::string phone,
+    Student(string id, string n, string phone,
             Gender g, bool driver, int rides = 0);
     Student(const Student& other);
 
-    std::string getId()             const;
-    std::string getName()           const;
-    std::string getPhoneNumber()    const;
-    Gender      getGender()         const;
-    bool        getIsDriver()       const;
-    int         getRidesCompleted() const;
+    string getId() const;
+    string getName() const;
+    string getPhoneNumber() const;
+    Gender getGender() const;
+    bool getIsDriver() const;
+    int getRidesDone() const;
 
-    void setName(const std::string& n);
-    void setPhone(const std::string& p);
+    void setName(const string& n);
+    void setPhone(const string& p);
     void setGender(Gender g);
-    void incrementRidesCompleted();
+    void addRide();
     void displayProfile() const;
 
     bool operator==(const Student& other) const;
     bool operator!=(const Student& other) const;
 
-    friend std::ostream& operator<<(std::ostream& os, const Student& s);
+    friend ostream& operator<<(ostream& os, const Student& s);
 };

@@ -7,38 +7,39 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+using namespace std;
 #ifdef _WIN32
 extern void setAppIcon(void* hwnd);
 #endif
 
 // White bg; maroon info-boxes; dark text on white; white text on maroon
-static const Color W_BG    = {255, 255, 255, 255}; // white screen bg
-static const Color W_FORM  = {252, 248, 249, 255}; // near-white form panel bg
-static const Color W_BOX   = {112,  15,  26, 255}; // maroon info box
-static const Color W_BOX2  = {138,  24,  40, 255}; // lighter maroon sub-box
-static const Color W_HDR   = { 65,   4,  13, 255}; // dark maroon header
-static const Color W_BDR   = {175,  40,  56, 255}; // maroon border (on boxes)
-static const Color W_FBDR  = {210, 195, 198, 255}; // soft border (on white bg)
-static const Color W_TXT   = { 28,  20,  22, 255}; // dark text on white
-static const Color W_MUT   = {130, 112, 116, 255}; // muted label on white
-static const Color W_PTXT  = {255, 255, 255, 255}; // white text on maroon
-static const Color W_PLBL  = {255, 200, 210, 255}; // light-pink label on maroon
-static const Color W_ACN   = {112,  15,  26, 255}; // maroon (buttons on white)
-static const Color W_SEC   = {220, 210, 212, 255}; // light-grey secondary btn
-static const Color W_FIELD = {248, 243, 245, 255}; // input field bg
-static const Color W_FDIM  = {158, 135, 140, 255}; // placeholder text
-static const Color W_OK    = { 35, 168,  72, 255}; // green
-static const Color W_ERR   = {210,  45,  45, 255}; // red
-static const Color W_CAMP  = { 28, 155,  70, 255}; // campus green (selected)
-static const Color W_LCMP  = {185, 230, 200, 255}; // campus light (unselected)
-static const Color W_LNRM  = {232, 220, 222, 255}; // normal area (unselected)
+static const Color W_BG    = {255, 255, 255, 255};
+static const Color W_FORM  = {252, 248, 249, 255};
+static const Color W_BOX   = {112,  15,  26, 255};
+static const Color W_BOX2  = {138,  24,  40, 255};
+static const Color W_HDR   = { 65,   4,  13, 255};
+static const Color W_BDR   = {175,  40,  56, 255};
+static const Color W_FBDR  = {210, 195, 198, 255};
+static const Color W_TXT   = { 28,  20,  22, 255};
+static const Color W_MUT   = {130, 112, 116, 255};
+static const Color W_PTXT  = {255, 255, 255, 255};
+static const Color W_PLBL  = {255, 200, 210, 255};
+static const Color W_ACN   = {112,  15,  26, 255};
+static const Color W_SEC   = {220, 210, 212, 255};
+static const Color W_FIELD = {248, 243, 245, 255};
+static const Color W_FDIM  = {158, 135, 140, 255};
+static const Color W_OK    = { 35, 168,  72, 255};
+static const Color W_ERR   = {210,  45,  45, 255};
+static const Color W_CAMP  = { 28, 155,  70, 255};
+static const Color W_LCMP  = {185, 230, 200, 255};
+static const Color W_LNRM  = {232, 220, 222, 255};
 
 static const int W = 1920, H = 1080;
 
-// Font wrappers — all text goes through ABeeZee
+// all text uses ABeeZee
 static Font g_font;
 static const float g_sp     = 1.0f;
-static const float g_fscale = 1.35f; // global font size multiplier
+static const float g_fscale = 1.35f;
 
 static void dtxt(const char* text, int x, int y, int size, Color color) {
     DrawTextEx(g_font, text, {(float)x, (float)y}, size * g_fscale, g_sp, color);
@@ -57,25 +58,25 @@ struct TIn {
     char buf[64] = {};
     bool on = false;
     void clear() { buf[0] = '\0'; on = false; }
-    std::string str() const { return buf; }
+    string str() const { return buf; }
 };
 
 // ---- widget helpers ----
 
 static bool btn(Rectangle r, const char* lbl, Color bg, Color fg = WHITE, int fs = 18) {
     bool ov = CheckCollisionPointRec(GetMousePosition(), r);
-    Color c = ov ? Color{(unsigned char)std::max(0, bg.r-22),
-                         (unsigned char)std::max(0, bg.g-22),
-                         (unsigned char)std::max(0, bg.b-22), 255} : bg;
+    Color c = ov ? Color{(unsigned char)max(0, bg.r-22),
+                         (unsigned char)max(0, bg.g-22),
+                         (unsigned char)max(0, bg.b-22), 255} : bg;
     DrawRectangleRec(r, c);
     DrawRectangleLinesEx(r, 1.0f, W_FBDR);
     int tw = mtxt(lbl, fs);
     dtxt(lbl, (int)(r.x+(r.width-tw)/2), (int)(r.y+(r.height-fs)/2), fs, fg);
     return ov && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 }
-static bool btnP(Rectangle r, const char* lbl, int fs = 18) { return btn(r, lbl, W_ACN, WHITE,  fs); }
-static bool btnD(Rectangle r, const char* lbl, int fs = 18) { return btn(r, lbl, W_ERR, WHITE,  fs); }
-static bool btnS(Rectangle r, const char* lbl, int fs = 16) { return btn(r, lbl, W_SEC, W_TXT,  fs); }
+static bool btnP(Rectangle r, const char* lbl, int fs = 18) { return btn(r, lbl, W_ACN, WHITE, fs); }
+static bool btnD(Rectangle r, const char* lbl, int fs = 18) { return btn(r, lbl, W_ERR, WHITE, fs); }
+static bool btnS(Rectangle r, const char* lbl, int fs = 16) { return btn(r, lbl, W_SEC, W_TXT, fs); }
 
 // maroon info box
 static void mbox(float x, float y, float w, float h) {
@@ -118,7 +119,7 @@ static void field(TIn& t, Rectangle r, const char* ph, bool numOnly = false, int
     }
 }
 
-// 3-column area picker — light bg for unselected, maroon/green for selected
+// 3-col area picker; campus areas highlighted in green
 static int areaPick(float x, float y, float gw, int sel, const char* lbl) {
     dtxt(lbl,(int)x,(int)y-22,16,W_MUT);
     float bw=(gw-14)/3.0f, bh=34;
@@ -127,17 +128,17 @@ static int areaPick(float x, float y, float gw, int sel, const char* lbl) {
         int row=i/3, col=i%3;
         Rectangle r={x+col*(bw+7), y+row*(bh+7), bw, bh};
         bool ov=CheckCollisionPointRec(GetMousePosition(),r);
-        bool isc=isIBACampus(intToArea(i));
+        bool isc=isCampus(intToArea(i));
         Color bg = (i==sel) ? (isc?W_CAMP:W_ACN)
                  :  ov      ? Color{205,192,195,255}
                  :  isc     ? W_LCMP
                             : W_LNRM;
         DrawRectangleRec(r,bg);
         DrawRectangleLinesEx(r,1.0f,W_FBDR);
-        std::string nm=areaToStr(intToArea(i));
+        string nm=areaToStr(intToArea(i));
         if (nm.size()>14) nm=nm.substr(0,13)+".";
         int ts=12, tw=mtxt(nm.c_str(),ts);
-        // dark text on light bg; white on maroon/green selected
+        // text color flips on selection
         Color tc = (i==sel) ? WHITE : (isc ? Color{20,100,45,255} : W_TXT);
         dtxt(nm.c_str(),(int)(r.x+(r.width-tw)/2),(int)(r.y+(r.height-ts)/2),ts,tc);
         if (ov&&IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) result=i;
@@ -145,7 +146,7 @@ static int areaPick(float x, float y, float gw, int sel, const char* lbl) {
     return result;
 }
 
-// X exit button (top-right)
+// X button top-right
 static void xbtn(bool& exitFlag) {
     Rectangle r={(float)(W-50),12,38,44};
     bool ov=CheckCollisionPointRec(GetMousePosition(),r);
@@ -156,8 +157,7 @@ static void xbtn(bool& exitFlag) {
     if (ov&&IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) exitFlag=true;
 }
 
-// Back button placed well clear of X (ends at W-70, 20px gap before X at W-50)
-// width=160, so x = W-70-160 = W-230
+// back btn, 20px gap from X at W-50
 static bool backBtn() {
     return btnS({(float)(W-230), 16, 160, 40}, "<- Back");
 }
@@ -169,23 +169,23 @@ class GUI3 {
     Screen screen = Screen::ROLE_SELECT;
     bool   drv    = false;
     bool   quit   = false;
-    std::string uid, err;
+    string uid, err;
 
     TIn reg_name, reg_phone, reg_vmake, reg_vmodel, reg_vplate, reg_vcap;
     int reg_gender=0, reg_vtype=0;
-    std::string reg_ok;
+    string reg_ok;
 
-    int cr_pu=0, cr_do=11, cr_pref=2, cr_doff=1;
+    int cr_pu=0, cr_do=10, cr_pref=2, cr_doff=1; // cr_do=10 is IBA City
     TIn cr_time;
 
-    int sr_pu=0, sr_do=11;
+    int sr_pu=0, sr_do=10; // sr_do=10 is IBA City
     TIn sr_time;
-    std::vector<std::string> sr_res;
+    vector<string> sr_res;
 
     TIn ep_name, ep_phone, ep_vmake, ep_vmodel, ep_vplate, ep_vcap;
     int  ep_gender=0;
     bool ep_del=false;
-    std::string ep_ok;
+    string ep_ok;
 
     void go(Screen s) { err=""; screen=s; sys.checkAutoComplete(); }
 
@@ -270,28 +270,28 @@ class GUI3 {
 
         if (btnP({x,y,210,48},"Create Account")) {
             try {
-                std::string nm=reg_name.str(), ph=reg_phone.str();
-                if (nm.empty()) throw std::runtime_error("Name required.");
-                if (ph.empty()) throw std::runtime_error("Phone required.");
-                if ((int)ph.size()>11) throw std::runtime_error("Phone max 11 digits.");
-                for (char c:ph) if(!isdigit((unsigned char)c)) throw std::runtime_error("Digits only.");
+                string nm=reg_name.str(), ph=reg_phone.str();
+                if (nm.empty()) throw runtime_error("Name required.");
+                if (ph.empty()) throw runtime_error("Phone required.");
+                if ((int)ph.size()>11) throw runtime_error("Phone max 11 digits.");
+                for (char c:ph) if(!isdigit((unsigned char)c)) throw runtime_error("Digits only.");
                 if (drv&&(reg_vmake.str().empty()||reg_vmodel.str().empty()||reg_vplate.str().empty()))
-                    throw std::runtime_error("All vehicle fields required.");
+                    throw runtime_error("All vehicle fields required.");
                 Gender g=reg_gender==0?Gender::MALE:Gender::FEMALE;
-                std::string sid=sys.createStudent(nm,ph,g,drv);
+                string sid=sys.createStudent(nm,ph,g,drv);
                 if (drv) {
                     int cap=1;
                     if (reg_vtype==0) {
-                        try { cap=reg_vcap.str().empty()?3:std::stoi(reg_vcap.str()); }
-                        catch(...){ throw std::runtime_error("Seats must be a number."); }
-                        if (cap<1||cap>6) throw std::runtime_error("Seats 1-6.");
+                        try { cap=reg_vcap.str().empty()?3:stoi(reg_vcap.str()); }
+                        catch(...){ throw runtime_error("Seats must be a number."); }
+                        if (cap<1||cap>6) throw runtime_error("Seats 1-6.");
                         sys.addCar(sid,reg_vmake.str(),reg_vmodel.str(),reg_vplate.str(),cap);
                     } else sys.addBike(sid,reg_vmake.str(),reg_vmodel.str(),reg_vplate.str(),1);
                 }
                 reg_ok="Account created! ID: "+sid; err="";
                 reg_name.clear(); reg_phone.clear();
                 reg_vmake.clear(); reg_vmodel.clear(); reg_vplate.clear(); reg_vcap.clear();
-            } catch(std::runtime_error& e){ err=e.what(); reg_ok=""; }
+            } catch(runtime_error& e){ err=e.what(); reg_ok=""; }
         }
         if (backBtn()) go(Screen::LOGIN);
     }
@@ -303,14 +303,14 @@ class GUI3 {
         hdr("Driver Dashboard");
 
         dtxt(("Welcome, "+st->getName()).c_str(),50,88,26,W_TXT);
-        dtxt(("Rides completed: "+std::to_string(st->getRidesCompleted())).c_str(),50,124,17,W_MUT);
+        dtxt(("Rides completed: "+to_string(st->getRidesDone())).c_str(),50,124,17,W_MUT);
 
-        std::string aid=sys.getDriverActiveRide(uid);
+        string aid=sys.activeRide(uid);
         float x=50,y=172,bw=360,bh=52,gap=12;
 
         if (aid.empty()) {
             if (btnP({x,y,bw,bh},"+ Create Ride")) {
-                cr_pu=0; cr_do=11; cr_pref=2; cr_time.clear(); cr_doff=1;
+                cr_pu=0; cr_do=10; cr_pref=2; cr_time.clear(); cr_doff=1;
                 go(Screen::CREATE_RIDE);
             }
         } else {
@@ -327,7 +327,7 @@ class GUI3 {
                 strncpy(ep_phone.buf, s->getPhoneNumber().c_str(), 62);
                 ep_gender=(s->getGender()==Gender::MALE)?0:1;
                 ep_del=false; ep_ok=""; ep_name.on=ep_phone.on=false;
-                auto* v=sys.getVehicle(sys.getVehicleForDriver(uid));
+                auto* v=sys.getVehicle(sys.vehicleOf(uid));
                 if (v) {
                     strncpy(ep_vmake.buf,  v->getMake().c_str(),         62);
                     strncpy(ep_vmodel.buf, v->getModel().c_str(),        62);
@@ -369,30 +369,30 @@ class GUI3 {
                     cr_pref==i?W_ACN:W_SEC, cr_pref==i?WHITE:W_TXT,14)) cr_pref=i;
         by+=54;
 
-        auto* veh=sys.getVehicle(sys.getVehicleForDriver(uid));
+        auto* veh=sys.getVehicle(sys.vehicleOf(uid));
         if (veh) dtxt((veh->getType()+": "+veh->getMake()+" "+veh->getModel()).c_str(),(int)lx,(int)by,15,W_MUT);
         else     dtxt("No vehicle on account.",(int)lx,(int)by,15,W_ERR);
         by+=28;
 
         if (!err.empty()) { dtxt(err.c_str(),(int)lx,(int)by,15,W_ERR); by+=24; }
 
-        std::string vehId=sys.getVehicleForDriver(uid);
+        string vehId=sys.vehicleOf(uid);
         if (veh && btnP({lx,by,200,48},"Create Ride")) {
-            std::string t=cr_time.str();
+            string t=cr_time.str();
             int th=-1,tm=-1;
             if (t.size()==5&&t[2]==':')
-                try { th=std::stoi(t.substr(0,2)); tm=std::stoi(t.substr(3,2)); } catch(...){}
+                try { th=stoi(t.substr(0,2)); tm=stoi(t.substr(3,2)); } catch(...){}
             if (th<0||th>23||tm<0||tm>59)   err="Invalid time (HH:MM).";
             else if (cr_pu==cr_do)           err="Pickup and drop-off must differ.";
-            else if (!isIBACampus(intToArea(cr_pu))&&!isIBACampus(intToArea(cr_do)))
+            else if (!isCampus(intToArea(cr_pu))&&!isCampus(intToArea(cr_do)))
                                              err="One area must be an IBA campus.";
             else {
-                std::string d=dateOffset(cr_doff);
-                if (isDateTimePast(d,t))     err="Time must be in the future.";
+                string d=dayOffset(cr_doff);
+                if (isPast(d,t)) err="Time must be in the future.";
                 else {
                     GenderPref gp=cr_pref==0?GenderPref::BOYS_ONLY:
                                   cr_pref==1?GenderPref::GIRLS_ONLY:GenderPref::HYBRID;
-                    std::string rid=sys.createRide(uid,vehId,d,t,intToArea(cr_pu),intToArea(cr_do),gp);
+                    string rid=sys.createRide(uid,vehId,d,t,intToArea(cr_pu),intToArea(cr_do),gp);
                     if (rid.empty()) err="Could not create ride.";
                     else go(Screen::DRIVER_MENU);
                 }
@@ -404,7 +404,7 @@ class GUI3 {
     void drawCurrentRide() {
         ClearBackground(W_BG);
         hdr("Current Ride");
-        std::string aid=sys.getDriverActiveRide(uid);
+        string aid=sys.activeRide(uid);
         auto* r=aid.empty()?nullptr:sys.getRide(aid);
         if (!r){ go(Screen::DRIVER_MENU); return; }
 
@@ -412,21 +412,21 @@ class GUI3 {
         mbox(x,y,500,236);
         dtxt(aid.c_str(),(int)(x+16),(int)(y+14),20,WHITE);
         y+=46;
-        auto row=[&](const char* k,const std::string& v){
+        auto row=[&](const char* k,const string& v){
             dtxt(k,         (int)(x+16),(int)y,14,W_PLBL);
             dtxt(v.c_str(), (int)(x+148),(int)y,14,WHITE);
             y+=22;
         };
-        row("Pickup:",    areaToStr(r->getPickupArea()));
-        row("Drop-off:",  areaToStr(r->getDropOffArea()));
+        row("Pickup:",    areaToStr(r->getPickup()));
+        row("Drop-off:",  areaToStr(r->getDropoff()));
         row("Date:",      r->getRideDate());
         row("Time:",      r->getRideTime());
-        row("Pref:",      genderPrefToStr(r->getGenderPref()));
-        row("Status:",    rideStatusToStr(r->getStatus()));
-        row("Seats left:",std::to_string(r->getSeatsLeft()));
+        row("Pref:",      prefStr(r->getPref()));
+        row("Status:",    statusStr(r->getStatus()));
+        row("Seats left:",to_string(r->getSeats()));
 
         y+=10;
-        if (!isDateTimePast(r->getRideDate(),r->getRideTime()))
+        if (!isPast(r->getRideDate(),r->getRideTime()))
             if (btnD({x,y,180,42},"Cancel Ride",15))
                 { sys.cancelRide(aid); go(Screen::DRIVER_MENU); }
 
@@ -449,7 +449,7 @@ class GUI3 {
     void drawHistory() {
         ClearBackground(W_BG);
         hdr("Ride History");
-        auto hist=sys.getDriverHistory(uid);
+        auto hist=sys.driverHistory(uid);
         float x=50,y=86,rw=W-100;
         if (hist.empty()) dtxt("No history yet.",(int)x,(int)y,18,W_MUT);
         int n=0;
@@ -460,9 +460,9 @@ class GUI3 {
             bool can=(r->getStatus()==RideStatus::CANCELED);
             mbox(x,y,rw,88);
             dtxt(id.c_str(),(int)(x+16),(int)(y+10),17,can?Color{255,130,130,255}:Color{140,240,170,255});
-            dtxt((areaToStr(r->getPickupArea())+" -> "+areaToStr(r->getDropOffArea())).c_str(),
+            dtxt((areaToStr(r->getPickup())+" -> "+areaToStr(r->getDropoff())).c_str(),
                      (int)(x+16),(int)(y+36),15,WHITE);
-            dtxt((r->getRideDate()+"  "+r->getRideTime()+"  "+rideStatusToStr(r->getStatus())).c_str(),
+            dtxt((r->getRideDate()+"  "+r->getRideTime()+"  "+statusStr(r->getStatus())).c_str(),
                      (int)(x+16),(int)(y+62),13,W_PLBL);
             y+=98; n++;
         }
@@ -477,11 +477,11 @@ class GUI3 {
         hdr("Passenger Dashboard");
 
         dtxt(("Welcome, "+st->getName()).c_str(),50,88,26,W_TXT);
-        dtxt(("Rides completed: "+std::to_string(st->getRidesCompleted())).c_str(),50,124,17,W_MUT);
+        dtxt(("Rides completed: "+to_string(st->getRidesDone())).c_str(),50,124,17,W_MUT);
 
         float x=50,y=172,bw=360,bh=52,gap=12;
         if (btnP({x,y,bw,bh},"Search Rides"))
-            { sr_pu=0; sr_do=11; sr_time.clear(); sr_res.clear(); go(Screen::SEARCH_RIDE); }
+            { sr_pu=0; sr_do=10; sr_time.clear(); sr_res.clear(); go(Screen::SEARCH_RIDE); }
         y+=bh+gap;
         if (btn({x,y,bw,bh},"Edit Profile",W_BOX,WHITE)) {
             auto* s=sys.getStudent(uid);
@@ -499,14 +499,14 @@ class GUI3 {
         float nx=x+bw+50,ny=172,nw=W-nx-50;
         mbox(nx,ny,nw,H-ny-30);
         dtxt("Notifications",(int)(nx+16),(int)(ny+14),18,Color{255,220,100,255});
-        auto& notifs=sys.getNotifications(uid);
-        if (notifs.empty()) dtxt("None.",(int)(nx+16),(int)(ny+50),15,W_PLBL);
+        auto& ns=sys.getNotifications(uid);
+        if (ns.empty()) dtxt("None.",(int)(nx+16),(int)(ny+50),15,W_PLBL);
         float py=ny+50; int n=0;
-        for (auto& notif:notifs){
+        for (auto& notif:ns){
             if (n>=10) break;
             DrawRectangle((int)(nx+8),(int)py,(int)(nw-16),56,W_BOX2);
             DrawRectangleLinesEx({nx+8,py,nw-16,56},1.0f,W_BDR);
-            std::string msg=notif.getMessage();
+            string msg=notif.getMessage();
             if (msg.size()>54){
                 dtxt(msg.substr(0,54).c_str(),(int)(nx+16),(int)(py+4), 12,WHITE);
                 dtxt(msg.substr(54).c_str(),  (int)(nx+16),(int)(py+22),12,WHITE);
@@ -533,10 +533,10 @@ class GUI3 {
         if (!err.empty()) { dtxt(err.c_str(),(int)lx,(int)by,15,W_ERR); by+=24; }
 
         if (btnP({lx,by,180,48},"Search")) {
-            std::string t=sr_time.str();
+            string t=sr_time.str();
             int th=-1,tm=-1;
             if (t.size()==5&&t[2]==':')
-                try { th=std::stoi(t.substr(0,2)); tm=std::stoi(t.substr(3,2)); } catch(...){}
+                try { th=stoi(t.substr(0,2)); tm=stoi(t.substr(3,2)); } catch(...){}
             if (th<0||th>23||tm<0||tm>59) err="Invalid time (HH:MM).";
             else if (sr_pu==sr_do)        err="Pickup and drop-off must differ.";
             else { sr_res=sys.searchRides(intToArea(sr_pu),intToArea(sr_do),t); go(Screen::SEARCH_RESULTS); }
@@ -559,20 +559,20 @@ class GUI3 {
 
             mbox(x,y,rw-220,120);
             dtxt(id.c_str(),(int)(x+14),(int)(y+10),18,WHITE);
-            dtxt((areaToStr(r->getPickupArea())+" -> "+areaToStr(r->getDropOffArea())).c_str(),
+            dtxt((areaToStr(r->getPickup())+" -> "+areaToStr(r->getDropoff())).c_str(),
                      (int)(x+14),(int)(y+38),15,WHITE);
             auto* v=sys.getVehicle(r->getVehicleId());
-            std::string vi=v?v->getMake()+" "+v->getModel()+" ("+v->getType()+")":"N/A";
+            string vi=v?v->getMake()+" "+v->getModel()+" ("+v->getType()+")":"N/A";
             dtxt(("Date: "+r->getRideDate()+"  Time: "+r->getRideTime()+
-                      "  Seats: "+std::to_string(r->getSeatsLeft())+"  "+vi).c_str(),
+                      "  Seats: "+to_string(r->getSeats())+"  "+vi).c_str(),
                      (int)(x+14),(int)(y+66),13,W_PLBL);
-            dtxt(("Pref: "+genderPrefToStr(r->getGenderPref())).c_str(),
+            dtxt(("Pref: "+prefStr(r->getPref())).c_str(),
                      (int)(x+14),(int)(y+90),13,W_PLBL);
 
             if (booked)
                 dtxt("Booked",(int)(x+rw-200),(int)(y+50),17,W_OK);
             else if (r->getStatus()==RideStatus::OPEN){
-                // light button with maroon text so it reads on the maroon box
+                // light btn with maroon text — readable on the maroon box
                 if (btn({x+rw-212,y+37,178,46},"Book Ride",W_FIELD,W_ACN,15))
                     if (!sys.bookRide(id,uid)) err="Cannot book (pref/seats).";
                     else { err=""; sr_res=sys.searchRides(intToArea(sr_pu),intToArea(sr_do),sr_time.str()); }
@@ -604,7 +604,7 @@ class GUI3 {
 
         if (drv) {
             float rx=x+iw+60,ry=86;
-            auto* v=sys.getVehicle(sys.getVehicleForDriver(uid));
+            auto* v=sys.getVehicle(sys.vehicleOf(uid));
             dtxt("Vehicle",(int)rx,(int)ry,18,W_TXT); ry+=32;
             if (v){
                 dtxt(("Type: "+v->getType()).c_str(),(int)rx,(int)ry,14,W_MUT); ry+=24;
@@ -622,29 +622,29 @@ class GUI3 {
 
         if (btnP({x,y,210,48},"Save Changes")) {
             try {
-                std::string nm=ep_name.str(),ph=ep_phone.str();
-                if (nm.empty()) throw std::runtime_error("Name required.");
-                if (ph.empty()) throw std::runtime_error("Phone required.");
-                if ((int)ph.size()>11) throw std::runtime_error("Phone max 11 digits.");
-                for (char c:ph) if(!isdigit((unsigned char)c)) throw std::runtime_error("Digits only.");
+                string nm=ep_name.str(),ph=ep_phone.str();
+                if (nm.empty()) throw runtime_error("Name required.");
+                if (ph.empty()) throw runtime_error("Phone required.");
+                if ((int)ph.size()>11) throw runtime_error("Phone max 11 digits.");
+                for (char c:ph) if(!isdigit((unsigned char)c)) throw runtime_error("Digits only.");
                 Gender g=ep_gender==0?Gender::MALE:Gender::FEMALE;
-                if (!sys.updateStudent(uid,nm,ph,g)) throw std::runtime_error("Update failed.");
+                if (!sys.updateStudent(uid,nm,ph,g)) throw runtime_error("Update failed.");
                 if (drv){
-                    auto* v=sys.getVehicle(sys.getVehicleForDriver(uid));
+                    auto* v=sys.getVehicle(sys.vehicleOf(uid));
                     if (v){
-                        std::string mk=ep_vmake.str(),mdl=ep_vmodel.str(),pl=ep_vplate.str();
-                        if (mk.empty()||mdl.empty()||pl.empty()) throw std::runtime_error("All vehicle fields required.");
+                        string mk=ep_vmake.str(),mdl=ep_vmodel.str(),pl=ep_vplate.str();
+                        if (mk.empty()||mdl.empty()||pl.empty()) throw runtime_error("All vehicle fields required.");
                         int cap=v->getCapacity();
                         if (v->getType()=="Car"){
-                            try { cap=ep_vcap.str().empty()?cap:std::stoi(ep_vcap.str()); }
-                            catch(...){ throw std::runtime_error("Seats must be a number."); }
-                            if (cap<1||cap>6) throw std::runtime_error("Seats 1-6.");
+                            try { cap=ep_vcap.str().empty()?cap:stoi(ep_vcap.str()); }
+                            catch(...){ throw runtime_error("Seats must be a number."); }
+                            if (cap<1||cap>6) throw runtime_error("Seats 1-6.");
                         }
                         sys.updateVehicle(uid,mk,mdl,pl,cap);
                     }
                 }
                 ep_ok="Saved."; err="";
-            } catch(std::runtime_error& e){ err=e.what(); ep_ok=""; }
+            } catch(runtime_error& e){ err=e.what(); ep_ok=""; }
         }
 
         y+=62;

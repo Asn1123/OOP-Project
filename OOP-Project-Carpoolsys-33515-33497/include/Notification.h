@@ -1,15 +1,16 @@
 #pragma once
 #include <string>
+using namespace std;
 
 class Notification {
 private:
-    std::string recipientId;
-    std::string message;
+    string toId;
+    string message;
 
 public:
-    Notification(std::string rid, std::string msg);
+    Notification(string id, string msg);
 
-    std::string getRecipientId() const;
-    std::string getMessage()     const;
-    void        display()        const;
+    string getTo()      const;
+    string getMessage() const;
+    void   display()    const;
 };

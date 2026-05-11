@@ -1,13 +1,14 @@
 #include "Car.h"
 #include <iostream>
+using namespace std;
 
 Car::Car() {}
 
-Car::Car(std::string vid, std::string oid, std::string mk,
-         std::string mdl, std::string plate, int cap)
+Car::Car(string vid, string oid, string mk,
+         string mdl, string plate, int cap)
     : Vehicle(vid, oid, mk, mdl, plate, cap) {}
 
-std::string Car::getType() const { return "Car"; }
+string Car::getType() const { return "Car"; }
 
 void Car::displayVehicle() const {
     Vehicle::displayVehicle();

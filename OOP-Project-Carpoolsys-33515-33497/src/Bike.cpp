@@ -1,13 +1,14 @@
 #include "Bike.h"
 #include <iostream>
+using namespace std;
 
 Bike::Bike() {}
 
-Bike::Bike(std::string vid, std::string oid, std::string mk,
-           std::string mdl, std::string plate, int cap)
+Bike::Bike(string vid, string oid, string mk,
+           string mdl, string plate, int cap)
     : Vehicle(vid, oid, mk, mdl, plate, cap) {}
 
-std::string Bike::getType() const { return "Bike"; }
+string Bike::getType() const { return "Bike"; }
 
 void Bike::displayVehicle() const {
     Vehicle::displayVehicle();
